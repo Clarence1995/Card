@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tecsun.card.dao.pub.PubDao">
+    <resultMap id="basicResultMap" type="com.tecsun.card.entity.beandao.pub.RedisDictionaryDAO">
+        <id column="ID" property="id"/>
+        <result column="GROUPID" property="groupId"/>
+        <result column="CODE" property="code" />
+    </resultMap>
+
+    <resultMap id="lazyChildDict"
+               type="com.tecsun.card.entity.beandao.pub.RedisDictionaryDAO"
+               extends="basicResultMap">
+        <collection property="children"
+                    ofType="com.tecsun.card.entity.beandao.pub.RedisDictionaryDAO"
+                    select="com.tecsun.card.dao.pub.PubDao.getChildByGroupId"
+                    column="code">
+        </collection>
+    </resultMap>
+
+    <update id="updateDict" parameterType="com.tecsun.card.entity.vo.RedisDictVO">
+        UPDATE T_DICTIONARY
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="code != null and code != ''">
+                code = #{code},
+            </if>
+        </set>
+        WHERE diction_Id = #{dictionId}
+    </update>
+
+    <select id="initRedis" resultMap="lazyChildDict">
+        SELECT DICTION_ID AS ID,NAME,STATUS,DEL,GROUPID,CODE
+        FROM T_DICTIONARY
+        WHERE GROUPID IN (SELECT GROUPID FROM T_DICTIONARY GROUP BY GROUPID having GROUPID = '0') AND GROUPID = '0'
+   </select>
+
+    <select id="getChildByGroupId" resultType="com.tecsun.card.entity.beandao.pub.RedisDic">
+      SELECT DICTION_ID, NAME, STATUS, GROUPID, CODE, DEL
+      FROM T_DICTIONARY
+      WHERE GROUPID = #{code}
+      AND GROUPID <![CDATA[!=]]> '0'
+    </select>
+
+    <!--<select id="getChildByGroupCode" resultMap=""-->
+</mapper>

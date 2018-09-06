@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="
+    	 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd"
+       default-lazy-init="true">
+
+    <context:property-placeholder ignore-unresolvable="true" location="classpath:config_1.138.properties"/>
+
+    <!-- =>S JTA配置-->
+    <!--
+        atomikos事务控制框架，其中看到有3种数据源，分别是，SimpleDataSourceBean,AtomikosDataSourceBean,AtomikosNonXADataSourceBean
+        AtomikosDataSourceBean:  分布式数据源,Atomikos实现的数据源，需要配置XA驱动，推荐此配置，可以配置连接池的信息
+        XA连接是一个JTA事务中的参与者。XA连接不支持JDBC的自动提交特性。
+        也就是说应用程序不必在xadatasource[XA]连接上调用java.sql.Connection.commit()或java.sql.Connection.rollback()
+        而应用程序应该使用UserTransaction.begin(),UserTransaction.commit()和UserTransaction.rollback().
+    -->
+
+    <!-- =>S 采集库-->
+    <bean id="collectDataSource" class="com.atomikos.jdbc.AtomikosDataSourceBean" destroy-method="close">
+        <property name="uniqueResourceName" value="collectDataSource"/>
+        <property name="xaDataSourceClassName" value="oracle.jdbc.xa.client.OracleXADataSource"/>
+        <property name="xaProperties">
+            <props>
+                <prop key="URL">${jdbc.collect.url}</prop>
+                <prop key="user">${jdbc.collect.username}</prop>
+                <prop key="password">${jdbc.collect.password}</prop>
+            </props>
+        </property>
+        <property name="minPoolSize" value="${jdbc.minPoolSize}"/>
+        <property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+        <property name="borrowConnectionTimeout" value="180"/>
+        <property name="testQuery" value="select 1 from dual"/>
+        <property name="maintenanceInterval" value="30"/>
+    </bean>
+
+    <!-- spring和MyBatis完美整合，不需要mybatis的配置映射文件 -->
+    <bean id="collectSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="collectDataSource"/>
+        <!-- 自动扫描mapping.xml文件，**表示迭代查找 -->
+        <property name="mapperLocations" value="classpath*:com/tecsun/card/dao/collect/*.xml"/>
+        <property name="configLocation" value="classpath:config/mybatis-config.xml" />
+    </bean>
+
+    <!-- DAO接口所在包名，Spring会自动查找其下的类 ,包下的类需要使用@MapperScan注解,否则容器注入会失败 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.tecsun.card.dao.collect"/>
+        <property name="sqlSessionFactoryBeanName" value="collectSqlSessionFactory"/>
+    </bean>
+    <!-- =>S 采集库-->
+
+    <!-- =>S 中间库-->
+    <bean id="midDataSource" class="com.atomikos.jdbc.AtomikosDataSourceBean" destroy-method="close">
+        <property name="uniqueResourceName" value="midDataSource"/>
+        <property name="xaDataSourceClassName" value="oracle.jdbc.xa.client.OracleXADataSource"/>
+        <property name="xaProperties">
+            <props>
+                <prop key="URL">${jdbc.mid.url}</prop>
+                <prop key="user">${jdbc.mid.username}</prop>
+                <prop key="password">${jdbc.mid.password}</prop>
+            </props>
+        </property>
+        <property name="minPoolSize" value="${jdbc.minPoolSize}"/>
+        <property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+        <property name="borrowConnectionTimeout" value="180"/>
+        <property name="testQuery" value="select 1 from dual"/>
+        <property name="maintenanceInterval" value="30"/>
+    </bean>
+
+    <!-- spring和MyBatis完美整合，不需要mybatis的配置映射文件 -->
+    <bean id="midSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="midDataSource"/>
+        <!-- 自动扫描mapping.xml文件，**表示迭代查找 -->
+        <property name="mapperLocations" value="classpath*:com/tecsun/card/dao/mid/*.xml"/>
+        <property name="configLocation" value="classpath:config/mybatis-config.xml" />
+    </bean>
+
+    <!-- DAO接口所在包名，Spring会自动查找其下的类 ,包下的类需要使用@MapperScan注解,否则容器注入会失败 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.tecsun.card.dao.mid"/>
+        <property name="sqlSessionFactoryBeanName" value="midSqlSessionFactory"/>
+    </bean>
+    <!-- =>E 中间库-->
+
+
+    <!-- 卡管库-->
+    <bean id="cardDataSource" class="com.atomikos.jdbc.AtomikosDataSourceBean" destroy-method="close">
+        <property name="uniqueResourceName" value="cardDataSource"/>
+        <property name="xaDataSourceClassName" value="oracle.jdbc.xa.client.OracleXADataSource"/>
+        <property name="xaProperties">
+            <props>
+                <prop key="URL">${jdbc.card.url}</prop>
+                <prop key="user">${jdbc.card.username}</prop>
+                <prop key="password">${jdbc.card.password}</prop>
+            </props>
+        </property>
+        <property name="minPoolSize" value="${jdbc.minPoolSize}"/>
+        <property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+        <property name="borrowConnectionTimeout" value="180"/>
+        <property name="testQuery" value="select 1 from dual"/>
+        <property name="maintenanceInterval" value="30"/>
+    </bean>
+
+    <!-- spring和MyBatis完美整合，不需要mybatis的配置映射文件 -->
+    <bean id="cardSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="cardDataSource"/>
+        <!-- 自动扫描mapping.xml文件，**表示迭代查找 -->
+        <property name="mapperLocations" value="classpath*:com/tecsun/card/dao/card/*.xml"/>
+        <property name="configLocation" value="classpath:config/mybatis-config.xml" />
+    </bean>
+
+    <!-- DAO接口所在包名，Spring会自动查找其下的类 ,包下的类需要使用@MapperScan注解,否则容器注入会失败 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.tecsun.card.dao.card"/>
+        <property name="sqlSessionFactoryBeanName" value="cardSqlSessionFactory"/>
+    </bean>
+
+
+    <!--公服数据源-->
+    <bean id="pubDataSource" class="com.atomikos.jdbc.AtomikosDataSourceBean" destroy-method="close">
+        <property name="uniqueResourceName" value="pubDataSource"/>
+        <property name="xaDataSourceClassName" value="oracle.jdbc.xa.client.OracleXADataSource"/>
+        <property name="xaProperties">
+            <props>
+                <prop key="URL">${jdbc.public.url}</prop>
+                <prop key="user">${jdbc.public.username}</prop>
+                <prop key="password">${jdbc.public.password}</prop>
+            </props>
+        </property>
+        <property name="minPoolSize" value="${jdbc.minPoolSize}"/>
+        <property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>
+        <property name="borrowConnectionTimeout" value="180"/>
+        <property name="testQuery" value="select 1 from dual"/>
+        <property name="maintenanceInterval" value="30"/>
+    </bean>
+
+    <!-- spring和MyBatis完美整合，不需要mybatis的配置映射文件 -->
+    <bean id="pubSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+        <property name="dataSource" ref="pubDataSource"/>
+        <!-- 自动扫描mapping.xml文件，**表示迭代查找 -->
+        <property name="mapperLocations" value="classpath*:com/tecsun/card/dao/pub/*.xml"/>
+        <property name="configLocation" value="classpath:config/mybatis-config.xml" />
+    </bean>
+
+    <!-- DAO接口所在包名，Spring会自动查找其下的类 ,包下的类需要使用@MapperScan注解,否则容器注入会失败 -->
+    <bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+        <property name="basePackage" value="com.tecsun.card.dao.pub"/>
+        <property name="sqlSessionFactoryBeanName" value="pubSqlSessionFactory"/>
+    </bean>
+
+
+
+    <!--<bean id="pubDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">-->
+        <!--<property name="driverClass" value="${jdbc.driverClassName}"/>-->
+        <!--<property name="jdbcUrl" value="${jdbc.public.url}"/>-->
+        <!--<property name="user" value="${jdbc.public.username}"/>-->
+        <!--<property name="password" value="${jdbc.public.password}"/>-->
+        <!--<property name="maxIdleTime" value="${jdbc.maxIdleTime}"/>-->
+        <!--<property name="minPoolSize" value="${jdbc.minPoolSize}"/>-->
+        <!--<property name="initialPoolSize" value="${jdbc.initialPoolSize}"/>-->
+        <!--<property name="maxPoolSize" value="${jdbc.maxPoolSize}"/>-->
+    <!--</bean>-->
+
+    <!--&lt;!&ndash; 创建SqlSessionFactory，同时指定数据源和mapper &ndash;&gt;-->
+    <!--<bean id="pubSqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">-->
+        <!--<property name="dataSource" ref="pubDataSource"/>-->
+        <!--<property name="mapperLocations" value="classpath:/mapper/pub/*.xml"/>-->
+        <!--<property name="configLocation" value="classpath:/config/mybatis-config.xml"></property>-->
+    <!--</bean>-->
+
+</beans>

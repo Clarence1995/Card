@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="
+    	 http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd"
+       default-lazy-init="true">
+    <description>Spring、SpringMVC配置集合</description>
+
+    <!-- Spring配置-->
+    <import resource="spring.xml"/>
+
+    <!-- JTA数据源配置-->
+    <import resource="spring-dataSource.xml"/>
+
+    <!-- 事务管理器-->
+    <import resource="spring-txmanager.xml"/>
+
+    <!-- Jedis-->
+    <import resource="spring-jedis.xml" />
+
+
+</beans>

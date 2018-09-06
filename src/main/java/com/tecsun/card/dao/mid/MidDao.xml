@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tecsun.card.dao.mid.MidDao">
+    <!--// xm sfzh xp collect_photo-->
+    <!--// gmsfzh xp  gat12-->
+    <!--// sfzh xp-->
+    <select id="getImgFromGONGAN" resultType="com.tecsun.card.entity.beandao.mid.MidImgDAO">
+        SELECT xp, sfzh FROM GONGAN_PHOTO WHERE SFZH = #{idCard}
+    </select>
+    <select id="getImgFromGAT12" resultType="com.tecsun.card.entity.beandao.mid.MidImgDAO">
+        SELECT xp, gmsfzh AS sfzh FROM GAT12 WHERE gmsfhm = #{idCard}
+    </select>
+    <select id="getImgFromCOLLECTPHOTO" resultType="com.tecsun.card.entity.beandao.mid.MidImgDAO">
+        SELECT xp, sfzh FROM COLLECT_PHOTO WHERE SFZH = #{idCard}
+    </select>
+    <select id="getVDCollectAC01" resultType="com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO">
+         SELECT status as key, COUNT(*) as visualData
+         FROM AC01
+         GROUP BY status
+         ORDER BY status
+    </select>
+</mapper>

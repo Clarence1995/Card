@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://java.sun.com/xml/ns/javaee"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
+         id="WebApp_ID" version="2.5">
+
+    <!--
+        1、对于一个 web 应用，其部署在 web 容器中，web 容器提供其一个全局的上下文环境，这个上下文就是 ServletContext，其为后面的 spring IoC 容器提供宿主环境
+        2、web.xml提供 contextLoaderListener。在web容器启动时,会触发容器初始化事件,此时 contextLoaderListener 会监听到这个事件，其 contextInitialized 方法会被调用。
+        在这个方法中，spring 会初始化一个启动上下文，这个上下文被称为根上下文，即 WebApplicationContext。
+        WebApplicationContext 是一个接口类，确切的说，其实际的实现类是 XmlWebApplicationContext，它就是 spring 的 IoC 容器，
+        其对应的 Bean 定义的配置由 web.xml 中的 < context-param > 标签指定。
+        在这个 IoC 容器初始化完毕后，Spring 以 WebApplicationContext.ROOTWEBAPPLICATIONCONTEXTATTRIBUTE 为属性 Key，将其存储到 ServletContext 中，便于获取
+        3、ContextLoaderListener 监听器初始化完毕后，开始初始化 web.xml 中配置的 Servlet，
+        这个 servlet 可以配置多个。
+        以最常见的 DispatcherServlet 为例，这个 servlet 实际上是一个标准的前端控制器，用以转发、匹配、处理每个 servlet 请求。
+        DispatcherServlet 上下文在初始化的时候会建立自己的 IoC 上下文，用以持有 spring mvc 相关的 bean。
+        特别地，在建立 DispatcherServlet 自己的 IoC 上下文前，会利用 WebApplicationContext.ROOTWEBAPPLICATIONCONTEXTATTRIBUTE
+        先从 ServletContext 中获取之前的根上下文 (即 WebApplicationContext) 作为自己上下文的 parent 上下文。有了这个 parent 上下文之后，再初始化自己持有的上下文。
+        这个 DispatcherServlet 初始化自己上下文的工作在其 initStrategies 方法中可以看到，大概的工作就是初始化处理器映射、视图解析等。
+        这个 servlet 自己持有的上下文默认实现类也是 mlWebApplicationContext。
+        初始化完毕后，spring 以与 servlet 的名字相关 (此处不是简单的以 servlet 名为 Key，而是通过一些转换，具体可自行查看源码) 的属性为属性 Key，
+        也将其存到 ServletContext 中，以便后续使用。
+        这样每个 servlet 就持有自己的上下文，即拥有自己独立的 bean 空间，同时各个 servlet 共享相同的 bean，即根上下文 (第 2 步中初始化的上下文) 定义的那些 bean。
+
+        3、Spring 容器与 SpringMVC 的容器联系与区别
+        ContextLoaderListener 中创建 Spring 容器主要用于整个 Web 应用程序需要共享的一些组件，比如 DAO、数据库的 ConnectionFactory 等；
+        而由 DispatcherServlet 创建的 SpringMVC 的容器主要用于和该 Servlet 相关的一些组件，比如 Controller、ViewResovler 等。它们之间的关系如下
+        (1)、作用范围 子容器(SpringMVC容器)可以访问父容器(Spring容器)的Bean,父容器不能访问子容器(SpringMVC容器)的Bean。
+        (2)、子容器的创建依赖于父容器的创建，父容器先于子容器创建。
+
+        4、Spring容器和SpringMvc容器的配置
+        在一个项目中引入 Spring 和 SpringMVC 这两个框架，其实就是两个容器：Spring 是根容器，SpringMVC 是其子容器。
+        在上文中，我们提到，SpringMVC 容器可以访问 Spring 容器中的 Bean，Spring 容器不能访问 SpringMVC 容器的 Bean。
+        我们一般思路是各负其责，明确边界，即：Spring 根容器负责所有其他非 controller 的 Bean 的注册，而 SpringMVC 只负责 controller 相关的 Bean 的注册
+
+    -->
+
+    <!-- 利用Spring提供的ContextLoaderListener监听器去监听ServletContext对象的创建，并初始化WebApplicationContext对象 -->
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+    <display-name>Clarencezero0214</display-name>
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath:/config/beans.xml</param-value>
+    </context-param>
+
+
+    <filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+        <init-param>
+            <param-name>forceEncoding</param-name>
+            <param-value>true</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <!-- 配置Spring MVC的前端控制器：DispatchcerServlet -->
+    <servlet>
+        <servlet-name>springMVC</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>classpath:config/springmvc.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>springMVC</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+    <welcome-file-list>
+        <welcome-file>/WEB-INF/index.jsp</welcome-file>
+    </welcome-file-list>
+</web-app>

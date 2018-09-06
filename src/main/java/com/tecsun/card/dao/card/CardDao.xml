@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tecsun.card.dao.card.CardDao">
+
+    <resultMap id="basicUserTableResultMap" type="com.tecsun.card.entity.beandao.visualdata.UserDAO">
+        <result column="OWNER" property="title" />
+        <collection property="children" ofType="com.tecsun.card.entity.beandao.visualdata.TableDAO">
+            <result column="TABLE_NAME" property="title" />
+            <association property="children"
+                         select="getTableColumn"
+                         column="tableName=TABLE_NAME">
+            </association>
+        </collection>
+    </resultMap>
+
+
+    <resultMap id="basicColumnCommentResultMap" type="com.tecsun.card.entity.beandao.visualdata.ColumnDAO">
+        <result column="COLUMN_NAME" property="title" />
+        <result column="TABLE_NAME" property="tableName"/>
+        <result column="DATA_TYPE" property="dataType" />
+        <result column="DATA_LENGTH" property="length" />
+        <result column="NULLABLE" property="nullable" />
+        <association property="comments"
+                     select="getColumnCommonByColumnName"
+                     column="{tableName=TABLE_NAME,columnName=COLUMN_NAME">
+        </association>
+    </resultMap>
+
+    <select id="getTableCommonByTableName" resultType="string">
+        SELECT COMMENTS FROM USER_TAB_COMMENTS WHERE TABLE_NAME = #{tableName}
+    </select>
+
+    <insert id="insertUser" parameterType="com.tecsun.card.entity.po.Ac01PO">
+        <selectKey keyProperty="idKey" resultType="long" order="BEFORE">
+            select AC01_SEQ_ID.NEXTVAL from dual
+        </selectKey>
+        insert into AC01
+        (ID,AAB001,Aab004,Aab099,Aac002,
+        Aac003,Aac003a,Aac004,Aac005,Aac006,
+        Aac009,Aac010,Aac012,Aac042,Aac044,
+        Aac043,Aac058,Aac060,Aac067,Aac147,
+        Aac161,Aae005,Aae006,Aae007,Aca111,
+        apply_status,apply_type,create_operator_id,email,mark_status,
+        photourl,status,validtag,CREATE_TIME,AAC001,
+        AAC301,AAC301A,AAC301B,COLLECT_FLAG
+        )
+        values
+        (#{idKey},#{aab001},#{aab004},#{aab099},#{aac002},
+        #{aac003},#{aac003a},#{aac004},#{aac005},#{aac006},
+        #{aac009},#{aac010},#{aac012},#{aac042},#{aac044},
+        #{aac043},#{aac058},#{aac060},#{aac067},#{aac147},
+        #{aac161},#{aae005},#{aae006},#{aae007},#{aca111},
+        #{applyStatus},#{applyType},#{createOperatorId},#{email},#{markStatus},
+        #{photourl},#{status},#{validtag},sysdate,#{aac001},
+        #{aac301},#{aac301a},#{aac301b},#{collectFlag}
+        )
+    </insert>
+    <insert id="insertBusApply" parameterType="com.tecsun.card.entity.po.BusApplyPO">
+        INSERT INTO BUS_APPLY
+        (ID, PERSON_ID, BUSINESS_TYPE, STATUS, REGIONAL_ID,
+        APPLY_TIME, APPLY_NAME, APPLY_ID_CARD, APPLY_MOBILE, UPDATE_TIME,
+        SOURCE, FLAG, CHOOSE_CARD_NO, CHANGE_BANK_NO, ISEXPRESS,
+        EXPRESS_NAME, EXPRESS_PHONE, EXPRESS_ADDRESS
+        )
+        VALUES
+        (BUS_APPLY_SEQ_ID.nextval, #{personId}, #{businessType},#{status},#{regionalId},
+          sysdate,#{applyName},#{applyIdCard},#{applyMobile},sysdate,
+          #{source},#{flag},#{chooseCardNo},#{changeBankNo},#{isexpress},
+          #{expressName},#{expressPhone},#{expressAddress})
+    </insert>
+    <update id="updateAC01Status" parameterType="com.tecsun.card.entity.beandao.card.Ac01DAO">
+        UPDATE AC01
+        <set>
+            <if test="applyStatus != null and applyStatus !=''">
+                APPLY_STATUS = #{applyStatus},
+            </if>
+            <if test="userStatus != null and userStatus != ''">
+                STATUS = #{userStatus},
+            </if>
+        </set>
+        WHERE AAC147 = #{AAC147}
+    </update>
+
+    <select id="listAllAC01" resultType="com.tecsun.card.entity.po.Ac01PO">
+        SELECT * FROM AC01 WHERE rownum &lt;10
+    </select>
+    <select id="userExistInCardByIdCard" resultType="java.lang.String">
+        SELECT AAC147 FROM AC01 WHERE AAC147 = #{idCard}
+    </select>
+    <select id="getUserSeq" resultType="java.lang.Long">
+        SELECT USERNO_SEQ.nextval FROM dual
+    </select>
+    <select id="getUserByIdCard" parameterType="string" resultType="com.tecsun.card.entity.po.Ac01PO">
+        SELECT * FROM AC01 WHERE AAC147 = #{idCard}
+    </select>
+    <select id="getVDCollectAC01" resultType="com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO">
+         SELECT status as key, COUNT(*) as visualData
+         FROM AC01
+         GROUP BY status
+         ORDER BY status
+    </select>
+    <select id="getBatchBeanByIdCard" parameterType="string" resultType="com.tecsun.card.controller.BatchBean">
+        SELECT ac.AAC001, ac.AAC147, ac.AAC003, ac.AAC004, ac.AAC006, ac.AAC067,
+        az.AAE053, az.AAZ501, az.AAZ500
+        FROM AC01 ac
+        LEFT JOIN AZ01 az on ac.CARD_ID = az.ID
+        LEFT JOIN MAKE_CARD_BATCH_DETAIL md on md.PERSON_ID = ac.ID
+        LEFT JOIN MAKE_CARD_BATCH_INFO mi on md.BATCH_ID = mi.ID
+        WHERE ac.AAC147 = #{idCard}
+    </select>
+    <select id="userExistInCardByIdCardAndName" resultType="com.tecsun.card.entity.beandao.card.Ac01DAO">
+        SELECT ac.AAC147, ac.AAC058, az.AAE053 FROM AC01 ac LEFT JOIN AZ01 az ON ac.CARD_ID = az.ID
+        WHERE AAC147=#{idCard} AND AAC003 = #{name}
+    </select>
+    <select id="getUserByIdCardAndName" resultType="com.tecsun.card.entity.beandao.card.Ac01DAO">
+        SELECT ac.ID, ac.AAC058, ac.AAC147, ac.AAC003, ac.AAC067, ac.AAC003,
+        ac.AAC301, ac.AAC058, ac.CARD_ID as cardId, az.AAE053,az.AAZ500, ac.STATUS  as userStatus
+        FROM AC01 ac LEFT JOIN AZ01 az ON ac.CARD_ID = az.ID
+        WHERE AAC147=#{idCard} AND AAC003=#{name}
+    </select>
+    <update id="updateAZ01StatusByIdCardAndName">
+        UPDATE AZ01 az
+        <set>
+            <if test="az01DAO.cardApplyStatus != null and az01DAO.cardApplyStatus !=''">
+                az.AAZ502 = #{az01DAO.cardApplyStatus},
+            </if>
+            <if test="az01DAO.cardStatus != null and az01DAO.cardStatus !=''">
+                az.status = #{az01DAO.cardStatus},
+            </if>
+            <if test="az01DAO.gsTime != null and az01DAO.gsTime !=''">
+                az.GS_TIME = sysdate,
+            </if>
+        </set>
+        WHERE id = #{az01DAO.cardId}
+    </update>
+    <insert id="insertSysLog" parameterType="com.tecsun.card.entity.beandao.card.SysLogDAO">
+        INSERT INTO SYS_LOG (id,bus_type,person_id,content,create_time,update_date)
+        values (sys_log_seq_id.nextval,#{bussinessType},#{userId},#{content},sysdate,sysdate)
+    </insert>
+    <select id="getUserTable" resultMap="basicUserTableResultMap">
+        SELECT OWNER,TABLE_NAME FROM ALL_TABLES WHERE OWNER = #{userName}
+    </select>
+
+    <select id="getTableColumn" resultMap="basicColumnCommentResultMap">
+        SELECT TABLE_NAME, COLUMN_NAME, DATA_TYPE ,DATA_LENGTH ,NULLABLE FROM USER_TAB_COLUMNS WHERE TABLE_NAME = #{tableName}
+    </select>
+    <select id="getColumnCommonByColumnName" resultType="java.lang.String">
+        SELECT COMMENTS  FROM USER_COL_COMMENTS WHERE TABLE_NAME = #{tableName} and COLUMN_NAME = #{columnName}
+     </select>
+
+</mapper>

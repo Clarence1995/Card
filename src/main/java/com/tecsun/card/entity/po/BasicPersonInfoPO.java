@@ -1,0 +1,85 @@
+package com.tecsun.card.entity.po;
+
+import lombok.Getter;
+import lombok.Setter;
+
+
+@Setter
+@Getter
+public class BasicPersonInfoPO {
+    private int id;
+    private String name;
+    private String sex;
+    private String education;
+    private String certNum;
+    private String certValidity;
+    private String nation;
+    private String birthday;
+    private String photoUrl;
+    private String address;
+    private String phone;
+    private String mobile;
+    private String isMarry;
+    private String bankCode;
+    private String photoSource;
+    private String gongAnStatus;
+    private String personStatus;
+    private String hkType;
+    private String guoJi;
+    private String regionalCode;
+    private String hkProperty;
+    private String hkbNo;
+    private String familyNo;
+    private String dealstatus;
+    private String personno;
+    private String createTime;
+    private String synchroTime;
+    private String deviceId;
+    private String certUp;
+    private String certDown;
+    private String adultFlag;
+    private String hkbUrl;
+    private String cbplace;
+    private String fkplace;
+    private String parmanentAddress;
+    private String parmanentZipCode;
+    private String certType;
+    private String bussType;
+    private String politicalStatus;
+    private String guardianName;
+    private String topBankName;
+    private String isBaby;
+    private String gis;
+    private String zangName;
+    private String synchroStatus;
+    private String guardianCertno;
+    private String insuredSituation;
+    private String noinsuredreason;
+    private String jobSituation;
+    private String departmentNo;
+    private String departmentName;
+    private String personInfo;
+    private String reviewStatus;
+    private String aac001;
+    private String ryzt;
+    private String dbStatus;
+    private String addressCode;
+    private String aac008;
+    private String medicalStatus;
+    private String guardianContact;
+    private String noJobReason;
+    private String zangWenStatus;
+    private String gonganStatus;
+    private String isExpress;
+    private String expressName;
+    private String expressPhone;
+    private String expressAddress;
+    private String isEnsure;
+    private String parmanentAddresscode;
+    private String updateTime;
+    private String dealMsg;
+    private String declarephotoUrl;
+    private String declareNo;
+    private String bankDeclareStatus;
+    private String signphotoUrl;
+}

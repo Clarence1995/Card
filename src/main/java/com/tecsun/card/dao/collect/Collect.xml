@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tecsun.card.dao.collect.CollectDao">
+    <update id="updateBasicPersonInfoStatus" parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO">
+        UPDATE BASIC_PERSON_INFO
+        <set>
+            <if test="synchroStatus != null and synchroStatus != ''">
+                synchroStatus = #{synchroStatus},
+            </if>
+            <if test="dealStatus != null and dealStatus != ''">
+                dealStatus = #{dealStatus},
+            </if>
+            <if test="dealMsg != null and dealMsg != ''">
+                dealMsg = #{dealMsg},
+            </if>
+            <if test="babyCard != null and babyCard != ''">
+                babyCard = #{babyCard}
+            </if>
+        </set>
+        WHERE cert_num = #{certNum}
+    </update>
+
+
+    <select id="lisetBasicPersonInfo"
+            parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO"
+            resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+        SELECT * FROM BASIC_PERSON_INFO where rownum &lt;10
+    </select>
+    <select id="listQualifiedBasicPerson"
+            parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO"
+            resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+        SELECT * FROM BASIC_PERSON_INFO b
+        <where>
+            <if test="certNum != null and certNum != ''">
+                b.cert_num = #{certNum}
+            </if>
+            <if test="synchroStatus != null and synchroStatus != ''">
+                and b.synchroStatus = #{synchroStatus}
+            </if>
+            <if test="regionalCode != null and regionalCode != ''">
+                and b.regionalCode = #{regionalCode}
+            </if>
+            <if test="dealStatus != null and dealStatus != ''">
+                and b.dealStatus = #{dealStatus}
+            </if>
+        </where>
+    </select>
+    <select id="getZangName" resultType="java.lang.String">
+        SELECT XM FROM (SELECT id,XM FROM ZANG_WEN WHERE SFZH = #{idCard} ORDER BY id DESC) WHERE ROWNUM = 1
+    </select>
+    <select id="listBasicBeanByIdList" parameterType="list"
+            resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+        SELECT * FROM BASIC_PERSON_INFO WHERE CERT_NUM IN
+        <foreach collection="list" index="index" item="idCard" open="(" close=")" separator=",">
+            #{idCard}
+        </foreach>
+    </select>
+    <select id="listVDBasicPersonAnalyset"
+            resultType="com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO">
+      SELECT synchrostatus as key, COUNT(*) as visualData
+      FROM BASIC_PERSON_INFO
+      GROUP BY synchrostatus
+      ORDER BY synchrostatus
+    </select>
+    <select id="getBasicPersonByIdCard" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+      SELECT * FROM (SELECT * FROM BASIC_PERSON_INFO WHERE CERT_NUM = #{idCard} ORDER BY id DESC ) where ROWNUM = 1
+    </select>
+
+
+</mapper>

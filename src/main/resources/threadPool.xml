@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<threadpool4j>
+	<!-- 至少要有一个线程池default -->
+	<pool name="0214">
+		<corePoolSize>1</corePoolSize>
+		<maxPoolSize>2</maxPoolSize>
+		<!-- 线程空闲存话的时间。单位：秒 -->
+		<keepAliveTime>15</keepAliveTime>
+		<workQueueSize>10</workQueueSize>
+	</pool>
+
+	<pool name="other">
+		<corePoolSize>1</corePoolSize>
+		<maxPoolSize>10</maxPoolSize>
+		<keepAliveTime>15</keepAliveTime>
+		<workQueueSize>10</workQueueSize>
+	</pool>
+
+    <!-- 线程池状态收集汇总配置
+    switch: on-开; off-关
+    interval: 单位(秒)
+     -->
+    <threadpoolstate switch="off" interval="60"></threadpoolstate>
+
+    <!-- 线程状态收集汇总配置
+    switch: on-开; off-关
+    interval: 单位(秒)
+     -->
+    <threadstate switch="off" interval="60"></threadstate>
+    
+    <!-- 线程堆栈收集配置
+    switch: on-开; off-关
+    interval: 单位(秒)
+     -->
+    <threadstack switch="off" interval="60"></threadstack>
+</threadpool4j>
