@@ -4,6 +4,9 @@
          xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_2_5.xsd"
          id="WebApp_ID" version="2.5">
 
+    <welcome-file-list>
+        <welcome-file>/WEB-INF/index.jsp</welcome-file>
+    </welcome-file-list>
     <!--
         1、对于一个 web 应用，其部署在 web 容器中，web 容器提供其一个全局的上下文环境，这个上下文就是 ServletContext，其为后面的 spring IoC 容器提供宿主环境
         2、web.xml提供 contextLoaderListener。在web容器启动时,会触发容器初始化事件,此时 contextLoaderListener 会监听到这个事件，其 contextInitialized 方法会被调用。
@@ -78,7 +81,5 @@
         <servlet-name>springMVC</servlet-name>
         <url-pattern>/</url-pattern>
     </servlet-mapping>
-    <welcome-file-list>
-        <welcome-file>/WEB-INF/index.jsp</welcome-file>
-    </welcome-file-list>
+
 </web-app>

@@ -21,11 +21,12 @@
     <mvc:resources mapping="/css/**" location="/static/css/" />
     <mvc:resources mapping="/fonts/**" location="/static/fonts/" />
     <mvc:resources mapping="/js/**" location="/static/js/" />
+    <mvc:resources mapping="/swagger/**" location="/swagger/"/>
     <!--<mvc:resources mapping="/pages/**" location="/views/"/>-->
 
 
-    <mvc:resources mapping="swagger-ui.html" location="classpath:/META-INF/resources/" />
-    <mvc:resources mapping="/webjars/**" location="classpath:/META-INF/resources/webjars/" />
+    <!--<mvc:resources mapping="swagger-ui.html" location="classpath:/META-INF/resources/" />-->
+    <!--<mvc:resources mapping="/webjars/**" location="classpath:/META-INF/resources/webjars/" />-->
     <!-- 视图解析器 -->
     <bean class="org.springframework.web.servlet.view.InternalResourceViewResolver">
         <property name="prefix" value="/WEB-INF/views/"/>
@@ -40,6 +41,9 @@
         <context:include-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice" />
     </context:component-scan>
 
+    <context:component-scan base-package="com.tecsun.card.swagger" />
+
+    <bean class="springfox.documentation.swagger2.configuration.Swagger2DocumentationConfiguration" id="swagger2Config"/>
     <!-- 这个配置一定要放在springmvc配置里面才能被切到-->
     <!-- 扫描aop及其下面的组件-->
     <context:component-scan base-package="com.tecsun.card.aop" />
