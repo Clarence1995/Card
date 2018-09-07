@@ -137,7 +137,7 @@ public class CollectToCardUserSynchroController {
             str.append(idCard );
             boolean photoResult = true;
             // 1、判断卡管库是否存在此人
-            boolean exit = cardService.userExistInCard(idCard);
+            boolean exit = cardService.userExistInCard(idCard, null);
             if (exit) {
                 successList.add(idCard + "_卡管存在");
                 continue;

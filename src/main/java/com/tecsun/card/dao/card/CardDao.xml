@@ -77,7 +77,9 @@
             <if test="userStatus != null and userStatus != ''">
                 STATUS = #{userStatus},
             </if>
-        </set>
+            <if test="applyType != null and applyType != ''">
+                apply_Type = #{applyType},
+            </if></set>
         WHERE AAC147 = #{AAC147}
     </update>
 
@@ -86,6 +88,9 @@
     </select>
     <select id="userExistInCardByIdCard" resultType="java.lang.String">
         SELECT AAC147 FROM AC01 WHERE AAC147 = #{idCard}
+        <if test="name != null and name !=''">
+            and AAC003 = #{name}
+        </if>
     </select>
     <select id="getUserSeq" resultType="java.lang.Long">
         SELECT USERNO_SEQ.nextval FROM dual

@@ -1,12 +1,28 @@
-package com.tecsun.card.common.utils;
+package com.tecsun.card.common.clarencezeroutils;
 
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 
-/**
- * Created by linzetian on 2016/9/20.
- * Description:字符串处理工具类
- */
 public class StringUtils {
+    private static final String SEPARATOR = File.separator;
+    /**
+     *@Description 字符串格式化成Windows
+     *@params  
+     *@return  
+     *@author  0214
+     *@createTime  2018/9/7
+     *@updateTime
+     */
+    public static String stringFormatPath(String path, String subffix) {
+        String result = path;
+        result = path.replace(":_", ":" + SEPARATOR);
+        result = path.replace("_", SEPARATOR);
+        if (null == subffix) {
+            return result;
+        } else {
+            return result + subffix;
+        }
+    }
 
     /**
      * 截取字符串

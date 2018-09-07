@@ -16,7 +16,7 @@ public interface CardService {
     int updateAC01Status (Ac01DAO acstatusBean);
 
 
-    boolean userExistInCard (String idCard);
+    boolean userExistInCard (String idCard, String name);
 
     boolean insertAC01(Ac01PO ac01PO);
 

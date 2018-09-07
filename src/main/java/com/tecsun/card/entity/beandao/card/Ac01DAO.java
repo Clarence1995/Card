@@ -21,6 +21,10 @@ public class Ac01DAO extends BasicInfoBean {
      */
     private String applyStatus;
     /**
+     * 申领类型
+     */
+    private String applyType;
+    /**
      * 证件类型
      */
     private String AAC058;

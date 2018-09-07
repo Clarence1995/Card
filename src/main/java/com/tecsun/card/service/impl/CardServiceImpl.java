@@ -52,23 +52,12 @@ public class CardServiceImpl implements CardService {
     @Override
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = {Exception.class})
     public int updateAC01Status(Ac01DAO acstatusBean) {
-        cardDao.updateAC01Status(acstatusBean);
-        BasicPersonInfoDAO basicDao = new BasicPersonInfoDAO();
-        basicDao.setCertNum("511621199501157759");
-        basicDao.setSynchroStatus("111");
-        collectDao.updateBasicPersonInfoStatus(basicDao);
-        try {
-            int a = 1 / 0;
-        } catch (ArithmeticException e) {
-            logger.error("出错,数据库回滚");
-            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-        }
-        return 0;
+        return cardDao.updateAC01Status(acstatusBean);
     }
 
     @Override
-    public boolean userExistInCard(String idCard) {
-        List<String> resultList = cardDao.userExistInCardByIdCard(idCard);
+    public boolean userExistInCard(String idCard, String name) {
+        List<String> resultList = cardDao.userExistInCardByIdCard(idCard, name);
         if (null != resultList && !resultList.isEmpty()) {
             return true;
         }

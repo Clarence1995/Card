@@ -45,10 +45,7 @@ public interface CardDao {
     // ~ GET
 
 
-
-
-
-    List<String> userExistInCardByIdCard (String idCard);
+    List<String> userExistInCardByIdCard(@Param("idCard")String idCard, @Param("name")String name);
 
     int insertUser (Ac01PO ac01PO);
 

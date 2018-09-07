@@ -57,6 +57,27 @@ public class TxtUtil<E> {
     }
 
 
+    public static void textFormat(String srcFile) throws IOException {
+        if (!new File(srcFile).exists()) {
+            throw new FileNotFoundException("[文本格式化] 源文件不存在");
+        }
+        List<String> stringList = TxtUtil.readLine(srcFile, "UTF-8");
+        Collections.sort(stringList, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                if (o1.length() > o2.length()) {
+                    return 1;
+                }
+                if (o1.length() == o2.length()) {
+                    return 0;
+                }
+
+                return -1;
+            }
+        });
+        TxtUtil.writeTxt(new File(srcFile), "UTF-8", stringList);
+    }
+
     /**
      * Txt文件合并,有一个问题就是换行符,
      * 如果文件末尾没有换行符,则会直接加到上一个文件内容后面

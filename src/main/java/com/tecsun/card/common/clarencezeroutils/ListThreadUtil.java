@@ -13,7 +13,6 @@ import java.util.List;
 public class ListThreadUtil {
     public static <T> List<List<T>> dynamicListThread (List<T> list) {
         return dynamicListThread(list, 0, 0);
-
     }
 
     public static <T> List<List<T>> dynamicListThread (List<T> list, int threadCountCustom) {
@@ -27,7 +26,8 @@ public class ListThreadUtil {
 
     public static <T> List<List<T>> dynamicListThread (List<T> list, int threadCountCustom, int dynamicArraySize) {
         List<List<T>> resultList = new ArrayList<>();
-        double threadCount = 10.0;          // 默认线程数量为10
+        // 默认线程数量为10
+        double threadCount = 10.0;
         int dynamicArrayListSize = 0;
         if (threadCountCustom == 0 && 0 == dynamicArraySize) {
             if (200000 <= list.size() && 500000 > list.size()) {
@@ -37,10 +37,12 @@ public class ListThreadUtil {
                 // 如果list集合长度为50w以上,则线程数量为30
                 threadCount = 30;
             }
-            dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);  // 动态数组大小
+            // 动态数组大小
+            dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);
         } else if (0 != threadCountCustom) {
             threadCount = threadCountCustom;
-            dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);  // 动态数组大小
+            // 动态数组大小
+            dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);
         } else if (0 != dynamicArraySize) {
             dynamicArrayListSize = dynamicArraySize;
             threadCount = (int) Math.ceil(dynamicArrayListSize / threadCount);
@@ -51,7 +53,6 @@ public class ListThreadUtil {
             // List threadList = new ArrayList();
             for (int j = i * dynamicArrayListSize; j < list.size(); j++) {
                 if (i == 0 && j >= dynamicArrayListSize) {
-                    // System.out.println("此时i 和 j的情况: " + i + "::" + j);
                     break;
                 } else if (i > 0) {
                     if (j >= (i + 1) * dynamicArrayListSize) {
@@ -59,7 +60,6 @@ public class ListThreadUtil {
                     }
                 }
                 threadList.add(list.get(j));
-
             }
             resultList.add(threadList);
         }

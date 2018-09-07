@@ -8,7 +8,7 @@
         SELECT xp, sfzh FROM GONGAN_PHOTO WHERE SFZH = #{idCard}
     </select>
     <select id="getImgFromGAT12" resultType="com.tecsun.card.entity.beandao.mid.MidImgDAO">
-        SELECT xp, gmsfzh AS sfzh FROM GAT12 WHERE gmsfhm = #{idCard}
+        SELECT xp, gmsfhm AS sfzh FROM GAT12 WHERE gmsfhm = #{idCard}
     </select>
     <select id="getImgFromCOLLECTPHOTO" resultType="com.tecsun.card.entity.beandao.mid.MidImgDAO">
         SELECT xp, sfzh FROM COLLECT_PHOTO WHERE SFZH = #{idCard}
