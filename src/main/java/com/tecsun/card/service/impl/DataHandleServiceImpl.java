@@ -45,7 +45,7 @@ public class DataHandleServiceImpl implements DataHandleService {
     public Result handleUserInfo(String filePath, String logPath, String imgPath) {
         Result result = new Result();
         try {
-            String parentPath = filePath.trim().substring(filePath.lastIndexOf("/") + 1);
+            String parentPath = filePath.trim().substring(0, filePath.lastIndexOf("\\") + 1);
             List<String> cardList = TxtUtil.readLine(filePath, "UTF-8");
             logger.info("[0214] 从TXT文件获取人数为: {}" , cardList.size());
             ArrayList<String> errorList   = new ArrayList<>();

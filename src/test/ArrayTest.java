@@ -1,12 +1,124 @@
+import com.tecsun.card.common.clarencezeroutils.DateUtils;
+import com.tecsun.card.common.clarencezeroutils.StringUtils;
 import com.tecsun.card.common.clarencezeroutils.ValidateUtil;
+import com.tecsun.card.common.txt.TxtUtil;
+import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.po.BasicPersonInfoPO;
 import com.tecsun.card.common.clarencezeroutils.ListThreadUtil;
+import io.jsonwebtoken.lang.Assert;
 import org.junit.Test;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.io.File;
+import java.io.IOException;
+import java.text.DecimalFormat;
+import java.util.*;
 
 public class ArrayTest {
+    @Test
+    public void testBeanFactory() throws IOException {
+        ClassPathResource res = new ClassPathResource("config/spring.xml");
+        DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
+        XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(factory);
+        reader.loadBeanDefinitions(res);
+        System.out.println(res.getFilename());
+        System.out.println(res.getFile().getAbsolutePath());
+    }
+
+
+    @Test
+    public void testResource() {
+        Resource resource = new ClassPathResource("D:\\161338pjsxx13lt3wkxtax.jpg");
+        System.out.println(resource.getFilename());
+
+    }
+    @Test
+    public void fileRename() {
+        String s1 = "E:\\imgtest\\511621199501157759_dfafdsafsdaafdsaf.jpg";
+        File file = new File(s1);
+        String idCard = file.getName().substring(0, 18);
+        String parentFilePath = file.getParentFile() + File.separator;
+        file.renameTo(new File(parentFilePath + idCard + ".jpg"));
+        System.out.println("name: " + file.getName().substring(0, 18));
+        System.out.println("filaPath: " + file.getParentFile());
+    }
+
+    @Test
+    public void testGetNum() {
+        String result = "";
+        long   userNo = 0;
+        String ran    = "";
+        StringBuilder sb = new StringBuilder(28);
+//        String userNoStr = redisService.get("sisp:cardmanagement:user_serial");
+        String userNoStr = "404";
+
+        // redis中存在该值
+//        if (null == userNoStr || "".equals(userNoStr)) {
+//            userNo = this.getUserSeq();
+//            redisService.set(Constants.USER_SERIAL, String.valueOf(userNo + 1));
+//        } else {
+//            redisService.set(Constants.USER_SERIAL, String.valueOf(Long.parseLong(userNoStr) + 1));
+//        }
+        userNo = Long.parseLong(userNoStr);
+        String times  = String.valueOf(System.currentTimeMillis());
+        sb.append(times);
+        Random random = new Random();
+        for (int i = 0; i < 6; i++) {
+//            ran += random.nextInt(10);
+            sb.append(random.nextInt(10));
+        }
+//        result = times + ran;
+        // 补全卡号
+        DecimalFormat df = new DecimalFormat("000000000");
+        sb.append(df.format(userNo));
+//        result += df.format(userNo);
+        System.out.println("用户编号：" + sb.toString().length());
+    }
+
+
+    @Test
+    public void testString() {
+        String s1 = "D:\\hey\\test.txt";
+        System.out.println(s1.substring(0, s1.lastIndexOf("\\")));
+    }
+    @Test
+    public void getToday() {
+        System.out.println(DateUtils.todayDate1());
+    }
+    @Test
+    public void testTxtUtilFormat() throws IOException {
+//        String srcFile = "C:\\Users\\0214\\Downloads\\20180907拉萨单位未制卡数据情况\\error.txt";
+//        TxtUtil.textFormat(srcFile);
+        String src = "C:_aaa_bbb_ccc.txt";
+        System.out.println(StringUtils.stringFormatPath(src, null));
+    }
+
+    @Test
+    public void testTextFormat() throws IOException {
+        String srcFile = "C:\\Users\\0214\\Downloads\\20180907拉萨单位未制卡数据情况\\error.txt";
+        List<String> stringList = TxtUtil.readLine(srcFile, "UTF-8");
+        System.out.println(stringList.size());
+        Collections.sort(stringList, new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                if (o1.length() > o2.length()) {
+                    return 1;
+                }
+                if (o1.length() == o2.length()) {
+                    return 0;
+                }
+
+                return -1;
+            }
+        });
+
+        for (String s : stringList) {
+            System.out.println(s);
+        }
+    }
     @Test
     public void ValidateTest() {
         BasicPersonInfoPO bean = new BasicPersonInfoPO();

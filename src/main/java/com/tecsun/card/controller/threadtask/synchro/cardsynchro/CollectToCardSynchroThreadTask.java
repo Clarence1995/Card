@@ -147,12 +147,12 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                 // 源图片路径
                 String srcImgPath = imgPath + File.separator + idCard + ".jpg";
                 // 从采集库中获取人员详情
-                BasicPersonInfoPO basicPersonInfoPO = collectService.getBasicInfoByIDCard(idCard);
+
 
                 // 1、卡管是否存在
                 CollectVO collectVO = new CollectVO();
                 collectVO.setCertNum(idCard);
-                boolean userExist = cardService.userExistInCard(idCard);
+                boolean userExist = cardService.userExistInCard(idCard, null);
                 if (userExist) {
                     // 1-1、如果卡管存在此人,则更新此人在采集库的同步状态
                     collectVO.setSynchroStatus(Constants.COLLECT_HAD_SYNCHRO);
@@ -162,6 +162,13 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                     continue;
                 }
 
+                BasicPersonInfoPO basicPersonInfoPO = collectService.getBasicInfoByIDCard(idCard);
+                if (null == basicPersonInfoPO) {
+                    // 采集库不存在此人
+                    logger.info("[采集库 => 卡管库] 此人{} 不存在采集库", idCard);
+                    errorList.add(idCard + "_" + "采集库不存在");
+                    continue;
+                }
                 // 2、人员信息校验
                 boolean validateSuccess = collectService.validateBasicPersonInfo(basicPersonInfoPO);
                 if (!validateSuccess) {

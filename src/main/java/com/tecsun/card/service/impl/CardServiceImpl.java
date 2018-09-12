@@ -1,5 +1,6 @@
 package com.tecsun.card.service.impl;
 
+import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.common.excel.ExcelUtil;
 import com.tecsun.card.dao.card.CardDao;
 import com.tecsun.card.dao.collect.CollectDao;
@@ -37,9 +38,9 @@ public class CardServiceImpl implements CardService {
     @Autowired
     CollectService collectService;
     @Resource
-    private CardDao    cardDao;
+    private CardDao      cardDao;
     @Resource
-    private CollectDao collectDao;
+    private CollectDao   collectDao;
     @Autowired
     private RedisService redisService;
 
@@ -132,7 +133,7 @@ public class CardServiceImpl implements CardService {
     }
 
     @Override
-    @Transactional(value = "springJTATransactionManager", rollbackFor = { Exception.class })
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
     public boolean insertBusApply(BusApplyPO busApplyPO) {
         try {
             cardDao.insertBusApply(busApplyPO);
@@ -145,39 +146,39 @@ public class CardServiceImpl implements CardService {
     }
 
     /**
-     *@Description ac01个人编号生成
-     *@params
-     *@return
-     *@author  0214
-     *@createTime  2018/9/6
-     *@updateTime
+     * @return
+     * @Description ac01个人编号生成
+     * @params
+     * @author 0214
+     * @createTime 2018/9/6
+     * @updateTime
      */
     @Override
-    @Transactional(value = "springJTATransactionManager", rollbackFor = { Exception.class })
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
     public String generateAC01IUserNumber() throws Exception {
-        String result = "";
-        long   userNo = 0;
-        String ran    = "";
-        String userNoStr = redisService.get("sisp:cardmanagement:user_serial");
+        StringBuilder sb        = new StringBuilder(28);
+        long          userNo    = 0;
+        String        userNoStr = redisService.get("sisp:cardmanagement:user_serial");
 
         // redis中存在该值
-        if (null == userNoStr || "".equals(userNoStr)) {
+        if ((ObjectUtils.isEmpty(userNoStr))) {
             userNo = this.getUserSeq();
             redisService.set(Constants.USER_SERIAL, String.valueOf(userNo + 1));
         } else {
+            userNo = Long.parseLong(userNoStr);
             redisService.set(Constants.USER_SERIAL, String.valueOf(Long.parseLong(userNoStr) + 1));
         }
-        String times  = String.valueOf(System.currentTimeMillis());
+        String times = String.valueOf(System.currentTimeMillis());
+        sb.append(times);
         Random random = new Random();
         for (int i = 0; i < 6; i++) {
-            ran += random.nextInt(10);
+            sb.append(random.nextInt(10));
         }
-        result = times + ran;
         // 补全卡号
         DecimalFormat df = new DecimalFormat("000000000");
-        result += df.format(userNo);
-        System.out.println("用户编号：" + result);
-        return result;
+        sb.append(df.format(userNo));
+        logger.info("[0214] generateAC01IUserNumber 用户编号为： " + sb.toString());
+        return sb.toString();
     }
 
     @Override
@@ -207,6 +208,7 @@ public class CardServiceImpl implements CardService {
 
     /**
      * 根据采集人员表,组装ac01
+     *
      * @param ac01
      * @param bean
      * @throws Exception

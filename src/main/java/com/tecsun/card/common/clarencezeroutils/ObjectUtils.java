@@ -14,6 +14,10 @@ import java.util.Map;
  *
  */
 public class ObjectUtils {
+    public static void main(String[] args) {
+        String s1 = " ";
+        System.out.println(isEmpty(s1));
+    }
 
 
     /**
@@ -22,8 +26,9 @@ public class ObjectUtils {
      * @return
      */
     public static boolean notEmpty(String str){
+        return !isEmpty(str);
         //StringUtils.isNotEmpty(str);
-        return str != null && !"".equals(str);
+//        return str != null && !"".equals(str);
     }
 
     /**
@@ -42,7 +47,7 @@ public class ObjectUtils {
      * @return
      */
     public static boolean isEmpty(String str){
-        return str == null || str.length() == 0;
+        return str == null || str.trim().length() == 0 ;
     }
 
     /**

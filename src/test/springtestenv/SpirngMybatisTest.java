@@ -50,6 +50,12 @@ public class SpirngMybatisTest {
     @Autowired
     CardDao cardDao;
 
+    @Test
+    public void testGetCardNum() throws Exception {
+        String s1 = cardService.generateAC01IUserNumber();
+        System.out.println(s1.length());
+    }
+
 
     @Test
     public void testTable() {
@@ -166,7 +172,7 @@ public class SpirngMybatisTest {
     @Test
     public void CardDaoTest () {
         String idCard = "511621199501157759";
-        boolean result = cardService.userExistInCard(idCard);
+        boolean result = cardService.userExistInCard(idCard, null);
         System.out.println(result);
     }
 
