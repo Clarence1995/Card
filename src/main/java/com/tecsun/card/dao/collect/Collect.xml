@@ -1,26 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.tecsun.card.dao.collect.CollectDao">
-    <update id="updateBasicPersonInfoStatus" parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO">
-        UPDATE BASIC_PERSON_INFO
-        <set>
-            <if test="synchroStatus != null and synchroStatus != ''">
-                synchroStatus = #{synchroStatus},
-            </if>
-            <if test="dealStatus != null and dealStatus != ''">
-                dealStatus = #{dealStatus},
-            </if>
-            <if test="dealMsg != null and dealMsg != ''">
-                dealMsg = #{dealMsg},
-            </if>
-            <if test="babyCard != null and babyCard != ''">
-                babyCard = #{babyCard}
-            </if>
-        </set>
-        WHERE cert_num = #{certNum}
-    </update>
 
-
+    <!-- ~SELECT =======================-->
     <select id="lisetBasicPersonInfo"
             parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO"
             resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
@@ -62,9 +44,143 @@
       GROUP BY synchrostatus
       ORDER BY synchrostatus
     </select>
-    <select id="getBasicPersonByIdCard" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
-      SELECT * FROM (SELECT * FROM BASIC_PERSON_INFO WHERE CERT_NUM = #{idCard} ORDER BY id DESC ) where ROWNUM = 1
+
+    <!-- 1、guardian_contact 修改 70数据库为guardian_contact, 采集库为guardiancontact
+         2、GUARDIAN_NAME 修改 70: GUARDIAN_NAME, 采集库 GUARDIANNAME
+         3、expressAddress 修改 70 expressAddress 采集库 express_Address
+    -->
+    <select id="getSingleBasicPersonByIdcard" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+        SELECT address,addressCode,
+        birthday,
+        certType, cert_num as certNum,cert_validity AS certValidity,
+        departmentno, departmentname, education,
+        EXPRESS_ADDRESS,
+        GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,
+        hkbNo,hkType,hkProperty,
+        isExpress,
+        mobile,
+        name,nation,
+        PARMANENTADDRESS AS parmanentAddress,PARMANENTZIPCODE AS parmanentZipCode,PARMANENTADDRESSCODE AS
+        parmanentAddresscode,personStatus,PHONE,
+        regionalCode,
+        sex
+        FROM (SELECT * FROM BASIC_PERSON_INFO
+        <where>
+            <if test="idCard != null and idCard != ''">
+                CERT_NUM = #{idCard}
+            </if>
+            <if test="name != null and name != ''">
+                AND NAME = #{name}
+            </if>
+        </where>
+        ORDER BY ID DESC
+        )
+        WHERE ROWNUM = 1
     </select>
+
+    <!-- 根据姓名、身份证号获取采集表中人员数-->
+    <select id="getBasicPersonByIdCardAndName" resultType="Integer">
+        SELECT COUNT(CERT_NUM) FROM BASIC_PERSON_INFO
+        <where>
+            <if test="idCard != null and idCard != ''">
+                CERT_NUM = #{idCard}
+            </if>
+            <if test="username != null and username != ''">
+                AND NAME = #{username}
+            </if>
+        </where>
+    </select>
+
+    <!-- 获取采集库人员重复数据 -->
+    <select id="getUserRepeatIdCard" resultType="java.lang.String">
+       SELECT CERT_NUM FROM BASIC_PERSON_INFO GROUP BY CERT_NUM HAVING COUNT(CERT_NUM) > 1
+    </select>
+
+    <!-- 获取人员信息详情(包含重复数据) -->
+    <select id="getUserInfoWithRepeat" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+        SELECT address,addressCode,
+        birthday,
+        certType, cert_num as certNum,cert_validity AS certValidity,
+        departmentno, departmentname, education,
+        EXPRESS_ADDRESS,
+        GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,
+        hkbNo,hkType,hkProperty,
+        isExpress,
+        mobile,
+        name,nation,
+        PARMANENTADDRESS AS parmanentAddress,PARMANENTZIPCODE AS parmanentZipCode,PARMANENTADDRESSCODE AS
+        parmanentAddresscode,personStatus,PHONE,
+        regionalCode,
+        sex
+        FROM BASIC_PERSON_INFO
+        <where>
+            <if test="idCard != null and idCard != ''">
+                CERT_NUM = #{idCard}
+            </if>
+            <if test="name != null and name != ''">
+                AND NAME = #{name}
+            </if>
+        </where>
+    </select>
+    <!-- ~SELECT =======================-->
+
+
+    <!--~ UPDATE =========================-->
+    <!-- 更新人员状态信息 -->
+    <update id="updateUserInfoStatusByIdCardAndName"
+            parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO">
+        UPDATE BASIC_PERSON_INFO
+        <set>
+            <if test="synchroStatus != null and synchroStatus != ''">
+                <!-- 同步状态 -->
+                synchroStatus = #{synchroStatus},
+            </if>
+            <if test="dealStatus != null and dealStatus != ''">
+                <!-- 处理状态 -->
+                dealStatus = #{dealStatus},
+            </if>
+            <if test="dealMsg != null and dealMsg != ''">
+                <!-- 处理信息 -->
+                dealMsg = #{dealMsg},
+            </if>
+            <if test="babyCard != null and babyCard != ''">
+                <!-- 是否为婴儿卡-->
+                babyCard = #{babyCard}
+            </if>
+        </set>
+        <where>
+            <if test="name != null and name != ''">
+                name = #{name}
+            </if>
+            <if test="certNum != null and certNum != ''">
+                AND cert_num = #{certNum}
+            </if>
+        </where>
+
+    </update>
+
+    <!-- 通过IdList更新采集库人员状态, 包括人员同步状态、处理状态、处理信息 -->
+    <update id="updateUserInfoStatusByIdList" parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO">
+        UPDATE BASIC_PERSON_INFO
+        <set>
+            <if test="synchroStatus != null and synchroStatus != ''">
+                <!-- 同步状态 -->
+                synchroStatus = #{synchroStatus},
+            </if>
+            <if test="dealStatus != null and dealStatus != ''">
+                <!-- 处理状态 -->
+                dealStatus = #{dealStatus},
+            </if>
+            <if test="dealMsg != null and dealMsg != ''">
+                <!-- 处理信息 -->
+                dealMsg = #{dealMsg},
+            </if>
+        </set>
+        WHERE ID IN
+        <foreach collection="idList" index="index" item="id" open="(" close=")" separator=",">
+           #{id}
+        </foreach>
+    </update>
 
 
 </mapper>

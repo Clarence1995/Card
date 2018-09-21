@@ -73,7 +73,7 @@ public class Ac01PO {
 
     private String photourl;
 
-    private String status;
+    private String  status;
 
     private String validtag;
 
@@ -97,5 +97,7 @@ public class Ac01PO {
 
     private String applyType;
 
+    private Long cardId;
 
+    private String dealMsg;
 }

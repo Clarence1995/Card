@@ -7,90 +7,136 @@ import com.tecsun.card.entity.beandao.card.SysLogDAO;
 import com.tecsun.card.entity.beandao.visualdata.ColumnDAO;
 import com.tecsun.card.entity.beandao.visualdata.UserDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
+import com.tecsun.card.entity.po.AZ01PO;
 import com.tecsun.card.entity.po.Ac01PO;
 import com.tecsun.card.entity.po.BusApplyPO;
 import org.apache.ibatis.annotations.Param;
 import org.mybatis.spring.annotation.MapperScan;
 
 import java.util.List;
+
 // ~ GET
 // ~ INSERT
 // ~ UPDATE
 // ~ DELETE
 @MapperScan
 public interface CardDao {
-    // ~ INSERT
-
-    // ~ DELETE
+    // ~ GET ---------------------------------------------
 
     /**
-     * 获取所有AC01表中的人员数据
-     * @return
+     * 根据name和idcard获取数量
+     * @return java.util.List<java.lang.String>
+     * @Description
+     * @param: idCard
+     * @param: name
+     * @author 0214
+     * @createTime 2018-09-19 16:56
+     * @updateTime
      */
-    List<Ac01PO> listAllAC01();
+    List<String> getUserByIdCardAndNameAll(@Param("idCard") String idCard, @Param("name") String name);
 
-    // ~ UPDATE
+    /**
+     * @return
+     * @Description  获取AC01详细信息, 去重(获取ID最大的那条记录)
+     * @params
+     * @author 0214
+     * @createTime 2018-09-14 16:47
+     * @updateTime
+     */
+    Ac01PO getAC01DetailByIdCardAndName(@Param("idCard") String idCard, @Param("name") String name);
+
+    AZ01PO getCardByUserId(@Param("cardId") Long cardId);
+
+
+
+    // ~ UPDATE  ---------------------------------------------
 
     /**
      * 更新AC01人员表状态
      * 包括 人员状态status、申领状态apply_status
+     *
      * @param Ac01DAO
      * @return
      */
-    int updateAC01Status (Ac01DAO Ac01DAO);
+    int updateAC01Status(Ac01DAO Ac01DAO);
+
+
+
+    // ~ DELETE  ---------------------------------------------
+
+    /**
+     * 获取所有AC01表中的人员数据
+     *
+     * @return
+     */
+    List<Ac01PO> listAllAC01();
+
+
+
+    // ~ INSERT  ---------------------------------------------
+
+    /**
+     * @Description  插入AC01表
+     * @param: ac01PO
+     * @return  int
+     * @author  0214
+     * @createTime 2018-09-20 10:59
+     * @updateTime
+     */
+    int insertUser(Ac01PO ac01PO);
 
 
 
 
-    // ~ GET
+
+    int insertBusApply(BusApplyPO busApplyPO);
 
 
-    List<String> userExistInCardByIdCard(@Param("idCard")String idCard, @Param("name")String name);
+    long getUserSeq();
 
-    int insertUser (Ac01PO ac01PO);
 
-    int insertBusApply (BusApplyPO busApplyPO);
 
-    long getUserSeq ();
+    List<VisualDataDoughunDAO> getVDCollectAC01();
 
-    Ac01PO getUserByIdCard (String idCard);
+    List<BatchBean> getBatchBeanByIdCard(String idCard);
 
-    List<VisualDataDoughunDAO> getVDCollectAC01 ();
+    List<Ac01DAO> getUserByIdCardAndName(@Param("idCard") String idCard, @Param("name") String name);
 
-    List<BatchBean> getBatchBeanByIdCard (String idCard);
-
-    List<Ac01DAO> getUserByIdCardAndName(@Param("idCard")String idCard, @Param("name")String name);
-
-    int updateAZ01StatusByIdCardAndName(@Param("az01DAO")AZ01DAO az01DAO);
+    int updateAZ01StatusByIdCardAndName(@Param("az01DAO") AZ01DAO az01DAO);
 
     int insertSysLog(SysLogDAO sysLogDAO);
 
     /**
      * 根据用户名获取当前用户所有的表
+     *
      * @param userName
      * @return
      */
-    UserDAO getUserTable(@Param("userName")String userName);
+    UserDAO getUserTable(@Param("userName") String userName);
 
     /**
      * 根据表名获取表中所有列
+     *
      * @param tableName
      * @return
      */
-    List<ColumnDAO> getTableColumn(@Param("tableName")String tableName);
+    List<ColumnDAO> getTableColumn(@Param("tableName") String tableName);
 
     /**
      * 根据表名获取表名注释
+     *
      * @param tableName
      * @return
      */
-    String getTableCommonByTableName(@Param("tableName")String tableName);
+    String getTableCommonByTableName(@Param("tableName") String tableName);
 
     /**
      * 根据表名和列名获取列名注释
+     *
      * @param tableName
      * @param columnName
      * @return
      */
-    String getColumnCommonByColumnName(@Param("tableName")String tableName, @Param("columnName")String columnName);
+    String getColumnCommonByColumnName(@Param("tableName") String tableName, @Param("columnName") String columnName);
+
 }

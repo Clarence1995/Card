@@ -1,7 +1,10 @@
 package com.tecsun.card.service.impl;
 
+import com.tecsun.card.common.clarencezeroutils.HandleCollectDateUtils;
+import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.dao.collect.CollectDao;
 import com.tecsun.card.entity.Constants;
+import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
 import com.tecsun.card.entity.po.BasicPersonInfoPO;
@@ -16,41 +19,126 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
 @Service("collectService")
 public class CollectServiceImpl implements CollectService {
-    private final static Logger logger = LoggerFactory.getLogger(CollectServiceImpl.class);
+    public static void main(String[] args) {
+        System.out.println("511621199501157759".substring(6, 14));
+    }
 
+    private final static Logger     logger       = LoggerFactory.getLogger(CollectServiceImpl.class);
+    private static       int        SUCCESS_CODE = 200;
+    private static       int        FAIL_CODE    = 0;
     @Resource
-    private CollectDao collectDao;
+    private              CollectDao collectDao;
 
     @Autowired
     private CardService cardService;
 
+    // ~ GET
+
+    /**
+     * @return
+     * @Description 根据IDCard和姓名获取采集表中人员详情, 并且获取ID最大的那一条记录
+     * @params
+     * @author 0214
+     * @createTime 2018-09-14 17:13
+     * @updateTime
+     */
     @Override
-    public List<BasicPersonInfoPO> listAllBasicPersonInfoPO () {
-        return collectDao.lisetBasicPersonInfo();
+    public BasicPersonInfoPO getBasicInfoByIDCard(String idCard, String name) {
+        return collectDao.getSingleBasicPersonByIdcard(idCard, name);
     }
 
+    /**
+     * @return java.util.List<java.lang.String>
+     * @Description 获取采集库人员重复数据
+     * @param:
+     * @author 0214
+     * @createTime 2018-09-21 15:38
+     * @updateTime
+     */
     @Override
-    @Transactional(value = "springJTATransactionManager", rollbackFor = { Exception.class })
-    public int updateBasicPersonInfoStatus (CollectVO basicDao) {
+    public List<String> getUserRepeatIdCard() {
+        return collectDao.getUserRepeatIdCard();
+    }
+
+
+    /**
+     * @param idCard
+     * @param name
+     * @return java.util.List<com.tecsun.card.entity.po.BasicPersonInfoPO>
+     * @Description 获取人员信息详情(包含重复数据)
+     * @param:
+     * @author 0214
+     * @createTime 2018-09-21 15:50
+     * @updateTime
+     */
+    @Override
+    public List<BasicPersonInfoPO> getUserInfoWithRepeat(String idCard, String name) {
+        return collectDao.getUserInfoWithRepeat(idCard, name);
+    }
+
+    // ~ UPDATE
+
+    /**
+     * 更新采集库BASIC_PERSON_INFO的人员状态(回写)
+     *
+     * @param basicDao
+     * @return
+     */
+    @Override
+    public int updateUserInfoStatusByIdCardAndName(CollectVO basicDao) {
         BasicPersonInfoDAO basicBeanDao = new BasicPersonInfoDAO();
         basicBeanDao.setCertNum(basicDao.getCertNum());
+        if (null != basicDao.getName()) {
+            basicBeanDao.setName(basicDao.getName());
+        }
         basicBeanDao.setDealStatus(basicDao.getDealStaus());
         basicBeanDao.setSynchroStatus(basicDao.getSynchroStatus());
         basicBeanDao.setDealMsg(basicDao.getDealMsg());
-        int a = collectDao.updateBasicPersonInfoStatus(basicBeanDao);
+        int a = collectDao.updateUserInfoStatusByIdCardAndName(basicBeanDao);
         return a;
     }
 
+    /**
+     * @return int
+     * @Description 通过IdList更新采集库人员状态, 包括人员同步状态、处理状态、处理信息
+     * @param: successIdList
+     * @param: synchroStatus
+     * @param: dealStatus
+     * @param: dealMsg
+     * @author 0214
+     * @createTime 2018-09-21 16:40
+     * @updateTime
+     */
     @Override
-    @Transactional(value = "springJTATransactionManager", rollbackFor = { Exception.class })
-    public List<BasicPersonInfoPO> listQualifiedBasicPerson (CollectVO collectVO) {
+    public int updateUserInfoStatusByIdList(List<Long> successIdList, String synchroStatus, String dealStatus, String dealMsg) {
+        if (!ObjectUtils.notEmpty(successIdList)) {
+            throw new NullPointerException("[0214 采集人员表通过IDList更新出错, idList为空");
+        }
+        BasicPersonInfoDAO userInfo = new BasicPersonInfoDAO();
+        userInfo.setIdList(successIdList);
+        userInfo.setSynchroStatus(synchroStatus);
+        userInfo.setDealMsg(dealMsg);
+        userInfo.setDealStatus(dealStatus);
+        return collectDao.updateUserInfoStatusByIdList(userInfo);
+    }
+
+    // ~ DELETE
+    // ~ INSERT
+
+
+    @Override
+    public List<BasicPersonInfoPO> listAllBasicPersonInfoPO() {
+        return collectDao.lisetBasicPersonInfo();
+    }
+
+
+    @Override
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public List<BasicPersonInfoPO> listQualifiedBasicPerson(CollectVO collectVO) {
         BasicPersonInfoDAO basicBeanDao = new BasicPersonInfoDAO();
         basicBeanDao.setCertNum(collectVO.getCertNum());
         basicBeanDao.setSynchroStatus(collectVO.getSynchroStatus());
@@ -59,24 +147,24 @@ public class CollectServiceImpl implements CollectService {
     }
 
     @Override
-    public String getZangName (String idCard) {
+    public String getZangNameByIdCard(String idCard) {
         return collectDao.getZangName(idCard);
     }
 
 
     /**
-     * 采集库入卡管人员信息校验,并把校验信息写入dealMsg
-     * 1、基础信息是否为空校验
-     * 2、婴儿卡校验
-     * 3、区域信息校验
-     * @param basicBean
      * @return
+     * @Description 用户信息校验, 包括用户基本信息、是否为婴儿卡、区域信息校验
+     * @params
+     * @author 0214
+     * @createTime 2018-09-17 11:32
+     * @updateTime
      */
     @Override
-    public boolean validateBasicPersonInfo (BasicPersonInfoPO basicBean) {
-        boolean validateResult = true;
-        StringBuilder dealMsg = new StringBuilder();
-        dealMsg.append("基本信息缺失: ");
+    public boolean validateuserInfo(BasicPersonInfoPO basicBean) {
+        boolean       validateResult = true;
+        StringBuilder dealMsg        = new StringBuilder();
+        dealMsg.append("基本信息缺失如下: ");
         if (StringUtils.isBlank(basicBean.getCertNum())) {
             validateResult = false;
             basicBean.setDealMsg("身份证号码为空");
@@ -85,115 +173,88 @@ public class CollectServiceImpl implements CollectService {
         if (StringUtils.isBlank(basicBean.getRegionalCode())) {
             // 行政区划代码
             validateResult = false;
-            basicBean.setDealMsg("行政区划代码为空");
+            basicBean.setDealMsg(",行政区划代码为空");
             return validateResult;
         }
         if (StringUtils.isBlank(basicBean.getName())) {
             validateResult = false;
-            dealMsg.append("姓名为空,");
+            dealMsg.append(",姓名为空");
         }
         if (StringUtils.isBlank(basicBean.getSex())) {
             validateResult = false;
-            dealMsg.append("性别为空,");
+            dealMsg.append(",性别为空,");
         }
         if (StringUtils.isBlank(basicBean.getNation())) {
             validateResult = false;
-            dealMsg.append("民族为空,");
+            dealMsg.append(",民族为空");
         }
         if (StringUtils.isBlank(basicBean.getGuoJi())) {
             validateResult = false;
-            dealMsg.append("国籍为空,");
+            dealMsg.append(",国籍为空");
         }
         if (StringUtils.isBlank(basicBean.getAddress())) {
             // 户籍地址
             validateResult = false;
-            dealMsg.append("户籍地址为空,");
+            dealMsg.append(",户籍地址为空");
         }
         if (StringUtils.isBlank(basicBean.getCertValidity())) {
             // 证件有效期
             validateResult = false;
-            dealMsg.append("证件有效期为空,");
+            dealMsg.append(",证件有效期为空");
         }
         if (StringUtils.isBlank(basicBean.getParmanentAddress())) {
             // 户籍地址
             validateResult = false;
-            dealMsg.append("常住地址为空,");
+            dealMsg.append(",常住地址为空");
         }
         if (StringUtils.isBlank(basicBean.getCertType())) {
             // 户籍地址
             validateResult = false;
-            dealMsg.append("证件类型为空,");
+            dealMsg.append(",证件类型为空");
         }
         if (StringUtils.isBlank(basicBean.getMobile())) {
             // 户籍地址
             validateResult = false;
-            dealMsg.append("手机号为空,");
+            dealMsg.append(",手机号为空");
+        }
+        if (StringUtils.isBlank(basicBean.getBirthday())) {
+            basicBean.setBirthday(basicBean.getCertNum().substring(6, 14));
         }
 
         // 2、判断是否为婴儿卡
-        String certNum = basicBean.getCertNum();
-        String year = certNum.substring(6, 10);
-        String month = certNum.substring(10, 12);
-        String day = certNum.substring(12, 14);
-        String birthday = year + "/" + month + "/" + day;
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-        try {
-            Date birth = sdf.parse(birthday);
-            Date now = new Date();
-            // 60*60*24*365*1000
-            boolean result = (now.getTime() - birth.getTime()) < 3600L * 24L * 365L * 6L * 1000L ? true : false;
-            if (result) {
-                basicBean.setIsBaby(Constants.COLLECT_IS_BABY);
-            } {
-                basicBean.setIsBaby(Constants.COLLECT_NOT_BABY);
-            }
-        } catch (ParseException e) {
-			e.printStackTrace();
+        boolean eBabyCard = HandleCollectDateUtils.eBabyCard(basicBean.getBirthday());
+        if (eBabyCard) {
+            basicBean.setIsBaby(Constants.COLLECT_IS_BABY);
+        } else {
+            basicBean.setIsBaby(Constants.COLLECT_NOT_BABY);
         }
-
         // 3、区域信息校验
-        String regionalCode = basicBean.getRegionalCode();
-        if (regionalCode.length() == 6 || regionalCode.length() == 8) {
-            if (regionalCode.length() == 6) {
-                if (!Constants.OUTERCODELIST.contains(regionalCode)) {
-                    logger.info("[采集库 信息校验] 此人:{} 区划编码不属于区外异地", basicBean.getCertNum());
-                    dealMsg.append("区划编码长度为6位,并不属于区外异地");
-                    validateResult = false;
-                }
-            } else {
-                if (!(regionalCode.length() == 8 && (regionalCode.substring(0, 2).equals("54")))) {
-                    logger.info("[采集库 信息校验] 此人:{} 区划编码不属于区内编码 ", basicBean.getCertNum());
-                    dealMsg.append("区划编码长度为8位,并不属于区内编码");
-                    validateResult = false;
-                }
-            }
-        } else {
-            logger.info("[采集库 信息校验] 此人: {} 区划编码不为6位或8位", basicBean.getCertNum());
-            dealMsg.append("区划编码长度不为6位或8位");
-            validateResult = false;
-        }
-        if (validateResult) {
+        Result validateRegionalcodeR = HandleCollectDateUtils.validateRegionalCode(basicBean.getRegionalCode());
+        int    validCodeR            = validateRegionalcodeR.getStateCode();
+        if (SUCCESS_CODE == validCodeR) {
             basicBean.setDealMsg("");
+            basicBean.setDealstatus(Constants.COLLECT_QUALIFIED);
         } else {
-            basicBean.setDealMsg(dealMsg.toString());
+            basicBean.setDealMsg(validateRegionalcodeR.getMsg());
+            basicBean.setDealMsg(Constants.COLLECT_USERINFO_ERROR);
         }
         return validateResult;
     }
 
     @Override
-    public List<BasicPersonInfoPO> getBasicInfoFromList (List<String> idCardList) {
-        return  collectDao.listBasicBeanByIdList(idCardList);
+    public List<BasicPersonInfoPO> getBasicInfoFromList(List<String> idCardList) {
+        return collectDao.listBasicBeanByIdList(idCardList);
     }
 
     @Override
-    public List<VisualDataDoughunDAO> getVDBasicPersonAnalyse () {
+    public List<VisualDataDoughunDAO> getVDBasicPersonAnalyse() {
         return collectDao.listVDBasicPersonAnalyset();
     }
 
+
     @Override
-    @Transactional(value = "springJTATransactionManager", rollbackFor = { Exception.class })
-    public BasicPersonInfoPO getBasicInfoByIDCard(String idCard) {
-        return collectDao.getBasicPersonByIdCard(idCard);
+    public int getCountFromBasicInfo(String idCard, String name) {
+        return collectDao.getBasicPersonByIdCardAndName(idCard, name);
     }
 
 

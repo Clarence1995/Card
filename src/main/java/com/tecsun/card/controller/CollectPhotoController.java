@@ -50,7 +50,7 @@ public class CollectPhotoController {
         // 1、获取某特定状态的数据
         List<BasicPersonInfoPO> listBean = collectService.listQualifiedBasicPerson(collectVO);
         collectVO.setSynchroStatus(collectVO.getSynchroStatus());
-        int a = collectService.updateBasicPersonInfoStatus(collectVO);
+        int a = collectService.updateUserInfoStatusByIdCardAndName(collectVO);
 
         // 2、根据线程动态划分数量cert
         // List<List<BasicPersonInfoPO>> dynamicList = ListThreadUtil.dynamicListThread(listBean,5);

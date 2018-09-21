@@ -4,7 +4,22 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 
 public class StringUtils {
+    public static void main(String[] args) {
+        int a = 0;
+
+    }
     private static final String SEPARATOR = File.separator;
+
+    public static String getRootPath(String filePath) {
+        return filePath.trim().substring(0, filePath.lastIndexOf(SEPARATOR));
+    }
+
+
+    private String lpad(int length, int number) {
+        String f = "%0" + length + "d";
+        return String.format(f, 0);
+    }
+
     /**
      *@Description 字符串格式化成Windows
      *@params  

@@ -17,7 +17,6 @@ public class DealBatchController {
     private static final Logger logger = LoggerFactory.getLogger(DealBatchController.class);
     @Autowired
     private DealBatchService dealBatchService;
-
     @RequestMapping(value = "deal", method = RequestMethod.GET)
     public Result dealBatch (HttpServletRequest req) throws Exception {
         // 1、读取Excel

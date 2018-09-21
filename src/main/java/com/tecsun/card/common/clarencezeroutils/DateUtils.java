@@ -13,30 +13,114 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.validation.constraints.NotNull;
+import javax.xml.crypto.Data;
+
 /**
- * @description 日期操作工具类
  * @author haixia.shi
+ * @description 日期操作工具类
  * @date 2017年12月7日
- *
  */
 public class DateUtils {
 
     private static final Logger logger = LoggerFactory.getLogger(DateUtils.class);
 
     // 设置基础时间格式
-    public static SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-    public static SimpleDateFormat dateFormat2 = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static SimpleDateFormat dateFormat    = new SimpleDateFormat("yyyy-MM-dd");
+    public static SimpleDateFormat dateFormat2   = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    public static SimpleDateFormat YMDHM         = new SimpleDateFormat("yyyyMMddHHmm");
+    public static SimpleDateFormat YMDHMS        = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static SimpleDateFormat dateFormatYMD = new SimpleDateFormat("yyyy/MM/dd");
 
     // 常用的格式
-    public static final String Y_M_D = "yyyy-MM-dd";
-    public static final String Y_M_D_H_M = "yyyy-MM-dd HH:mm";
+    public static final String Y_M_D       = "yyyy-MM-dd";
+    public static final String Y_M_D_H_M   = "yyyy-MM-dd HH:mm";
     public static final String Y_M_D_H_M_S = "yyyy-MM-dd HH:mm:ss";
-    public static final String YMD = "yyyyMMdd";
-    public static final String YMDHM = "yyyyMMddHHmm";
-    public static final String YMDHMS = "yyyyMMddHHmmss";
-    public static final String ymd = "yyyy/MM/dd";
-    public static final String ymd_H_M = "yyyy/MM/dd HH:mm";
-    public static final String ymd_H_M_S = "yyyy/MM/dd HH:mm:ss";
+    public static final String YMD         = "yyyyMMdd";
+    public static final String ymd         = "yyyy/MM/dd";
+    public static final String ymd_H_M     = "yyyy/MM/dd HH:mm";
+    public static final String ymd_H_M_S   = "yyyy/MM/dd HH:mm:ss";
+
+    public static void main(String[] args) {
+        System.out.println(getNowYMDHMS());
+        // String s1   = "20180917";
+        // Date   date = DateUtils.getDateByString(s1, YMD);
+        // System.out.println(date.getTime());
+    }
+
+    /**
+     * @return
+     * @Description 获取当前日期并以 yyyyMMddHHmm 格式返回 精确到分
+     * @params
+     * @author 0214
+     * @createTime 2018-09-17 10:19
+     * @updateTime
+     */
+    public static String getNowYMDHM() {
+        Date now = new Date();
+        return YMDHM.format(now);
+    }
+
+    public static String getNowYMDHMS() {
+        Date now = new Date();
+        return YMDHMS.format(now);
+    }
+
+    /**
+     * @return
+     * @Description 格式化日期为自定义格式
+     * @params
+     * @author 0214
+     * @createTime 2018-09-17 10:22
+     * @updateTime
+     */
+    public static String dateFormat(String timeStr, String pattern) {
+        if (null == pattern || "".equals(pattern)) {
+            pattern = "yyyy/MM/dd HH";
+        }
+        Date             date = null;
+        String           time = null;
+        SimpleDateFormat sdf  = new SimpleDateFormat(YMD);
+        try {
+            date = sdf.parse(timeStr);
+            time = dateFormatYMD.format(date);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return time;
+    }
+
+
+    public static Date getDateByString(String timeStr, String pattern) {
+        Date             date = null;
+        SimpleDateFormat sdf  = new SimpleDateFormat(pattern);
+        try {
+            date = sdf.parse(timeStr);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return date;
+    }
+
+    /**
+     * 获取当前的日期
+     *
+     * @return 以字符串格式返回当前日期
+     */
+    public static String todayDate1() {
+        // 获取今日日期
+        Date date = new Date();
+        // 日期格式化为字符串
+        String endTime = dateFormat.format(date);
+
+        return endTime;
+    }
+
+    public static String todayDatemm() {
+        Date date = new Date();
+        return dateFormat2.format(date);
+    }
+
 
     /**
      * 格式化方法(只能格式化数据为【yyyy-MM-dd、yyyy-MM-dd HH:mm:ss】)
@@ -51,15 +135,14 @@ public class DateUtils {
 
         System.out.println(format);
 
-        SimpleDateFormat sdf = new SimpleDateFormat(format);
-        Date date = null;
-        String time = "";
+        SimpleDateFormat sdf  = new SimpleDateFormat(format);
+        Date             date = null;
+        String           time = "";
         try {
-
             date = sdf.parse(selectDate);
-
-            time = sdf.format(date);
+            time = dateFormatYMD.format(date);
         } catch (ParseException e) {
+            e.printStackTrace();
             logger.info("时间格式有误");
             return null;
         }
@@ -80,9 +163,9 @@ public class DateUtils {
             stringFormat = "yyyy-MM-dd";
         }
 
-        SimpleDateFormat sdf = new SimpleDateFormat(dateFormat);
-        Date date = null;
-        String time = "";
+        SimpleDateFormat sdf  = new SimpleDateFormat(dateFormat);
+        Date             date = null;
+        String           time = "";
         try {
             date = sdf.parse(selectDate);
             sdf = new SimpleDateFormat(stringFormat);
@@ -98,8 +181,7 @@ public class DateUtils {
     /**
      * 判断日期是否符合“YYYY-MM-DD”格式
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return 是返回true，不是返回false
      */
     public static boolean isValidDate(String selectDate) {
@@ -121,14 +203,14 @@ public class DateUtils {
         Date date = null;
         try {
             date = dateFormat.parse(expDate);
-            int year = Integer.parseInt(expDate.substring(0, 4));
+            int year  = Integer.parseInt(expDate.substring(0, 4));
             int month = Integer.parseInt(expDate.substring(5, 7));
-            int day = Integer.parseInt(expDate.substring(8, 10));
+            int day   = Integer.parseInt(expDate.substring(8, 10));
             if (month > 12 || month < 1) {
                 return false;
             }
 
-            int[] monthLengths = new int[] { 0, 31, -1, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+            int[] monthLengths = new int[]{0, 31, -1, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
 
             if (isLeapYear(year)) {
                 monthLengths[2] = 29;
@@ -161,12 +243,11 @@ public class DateUtils {
     /**
      * 返回查询日期年份
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Integer getYear(String selectDate) {
-        Date date = null;
+        Date    date = null;
         Integer year = null;
         try {
             date = dateFormat.parse(selectDate);
@@ -185,12 +266,11 @@ public class DateUtils {
     /**
      * 返回查询日期的月
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Integer getMonth(String selectDate) {
-        Date date = null;
+        Date    date  = null;
         Integer month = null;
         try {
             date = dateFormat.parse(selectDate);
@@ -208,13 +288,12 @@ public class DateUtils {
     /**
      * 返回查询日期的日
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Integer getDay(String selectDate) {
-        Date date = null;
-        Integer day = null;
+        Date    date = null;
+        Integer day  = null;
         try {
             date = dateFormat.parse(selectDate);
             Calendar cal = Calendar.getInstance();
@@ -231,12 +310,11 @@ public class DateUtils {
     /**
      * 返回查询日期的小时
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Integer getHour(String selectDate) {
-        Date date = null;
+        Date    date = null;
         Integer hour = null;
         try {
             date = dateFormat2.parse(selectDate);
@@ -254,12 +332,11 @@ public class DateUtils {
     /**
      * 返回查询日期的分钟
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Integer getMinute(String selectDate) {
-        Date date = null;
+        Date    date   = null;
         Integer minute = null;
         try {
             date = dateFormat2.parse(selectDate);
@@ -277,12 +354,11 @@ public class DateUtils {
     /**
      * 返回查询日期的秒
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Integer getSecond2(String selectDate) {
-        Date date = null;
+        Date    date   = null;
         Integer second = null;
         try {
             date = dateFormat2.parse(selectDate);
@@ -300,12 +376,11 @@ public class DateUtils {
     /**
      * 返回查询日期的毫秒
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Long getMillis(String selectDate) {
-        Date date = null;
+        Date date   = null;
         Long millis = null;
         try {
             date = dateFormat2.parse(selectDate);
@@ -323,12 +398,11 @@ public class DateUtils {
     /**
      * 返回查询日期的星期 （1：星期一，2:星期二 ... 6:星期六 0:星期日）
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static Integer getChinaWeek(String selectDate) {
-        Date date = null;
+        Date    date = null;
         Integer week = null;
         try {
             date = dateFormat.parse(selectDate);
@@ -344,24 +418,6 @@ public class DateUtils {
         return week;
     }
 
-    /**
-     * 获取当前的日期
-     *
-     * @return 以字符串格式返回当前日期
-     */
-    public static String todayDate1() {
-        // 获取今日日期
-        Date date = new Date();
-        // 日期格式化为字符串
-        String endTime = dateFormat.format(date);
-
-        return endTime;
-    }
-
-    public static String todayDatemm() {
-        Date date = new Date();
-        return dateFormat2.format(date);
-    }
 
     /**
      * 获取当前的日期2
@@ -387,13 +443,12 @@ public class DateUtils {
     /**
      * 获得指定日期的前一天
      *
-     * @param selectDate
-     *            查询时间
+     * @param selectDate 查询时间
      * @return 返回一个格式化后的时间
      */
     public static String getSpecifiedDayBefore(String selectDate) {
-        Calendar c = Calendar.getInstance();
-        Date date = null;
+        Calendar c    = Calendar.getInstance();
+        Date     date = null;
         try {
             date = dateFormat.parse(selectDate);
         } catch (ParseException e) {
@@ -411,13 +466,12 @@ public class DateUtils {
     /**
      * 获得指定日期的后一天
      *
-     * @param selectDate
-     *            查询时间
+     * @param selectDate 查询时间
      * @return 返回一个格式化后的时间
      */
     public static String getSpecifiedDayAfter(String selectDate) {
-        Calendar c = Calendar.getInstance();
-        Date date = null;
+        Calendar c    = Calendar.getInstance();
+        Date     date = null;
         try {
             date = dateFormat.parse(selectDate);
         } catch (ParseException e) {
@@ -439,7 +493,7 @@ public class DateUtils {
      */
     public static String yesterdayDate1() {
         // 获取当前日期
-        Date date = new Date();
+        Date     date     = new Date();
         Calendar calendar = Calendar.getInstance();
         // 获取前一天日期
         calendar.setTime(date);
@@ -506,10 +560,10 @@ public class DateUtils {
      * @return
      */
     public static String getCurrMonth() {
-        Calendar cal = Calendar.getInstance();
-        int year = cal.get(Calendar.YEAR);
-        int month = cal.get(Calendar.MONTH) + 1;
-        String months = "";
+        Calendar cal    = Calendar.getInstance();
+        int      year   = cal.get(Calendar.YEAR);
+        int      month  = cal.get(Calendar.MONTH) + 1;
+        String   months = "";
         if (month < 10) {
             months = "0" + month;
         } else {
@@ -550,12 +604,11 @@ public class DateUtils {
     /**
      * 获取查询日期所在月的第一天
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static String getFirstDay(String selectDate) {
-        Date date = null;
+        Date   date      = null;
         String day_first = "";
         try {
             // 字符串转日期
@@ -578,12 +631,11 @@ public class DateUtils {
     /**
      * 获取查询日期所在月的最后一天
      *
-     * @param selectDate
-     *            查询日期
+     * @param selectDate 查询日期
      * @return
      */
     public static String getLastDay(String selectDate) {
-        Date date = null;
+        Date   date     = null;
         String day_last = "";
         try {
             // 字符串转日期
@@ -610,8 +662,7 @@ public class DateUtils {
     /**
      * 获取从开始时间到当前时间经历的天数(包括开始时间和结束时间)
      *
-     * @param startTime
-     *            开始时间
+     * @param startTime 开始时间
      * @return 返回int类型数值
      */
     public static int todayBetween(String startTime) {
@@ -619,9 +670,9 @@ public class DateUtils {
         // 获取今日日期
         Date date = new Date();
         // 字符串格式化为日期
-        Calendar cal = Calendar.getInstance();
-        long time1 = 0;
-        long time2 = 0;
+        Calendar cal   = Calendar.getInstance();
+        long     time1 = 0;
+        long     time2 = 0;
         try {
             cal.setTime(dateFormat.parse(startTime));
             // 获取开始时间的时间戳
@@ -643,17 +694,15 @@ public class DateUtils {
     /**
      * 获取从开始时间到结束时间经历的天数(包括开始时间和结束时间)
      *
-     * @param startTime
-     *            开始时间
-     * @param endTime
-     *            结束时间
+     * @param startTime 开始时间
+     * @param endTime   结束时间
      * @return 返回int类型数值
      */
     public static int daysBetween(String startTime, String endTime) {
         // 字符串格式化为日期
-        Calendar cal = Calendar.getInstance();
-        long time1 = 0;
-        long time2 = 0;
+        Calendar cal   = Calendar.getInstance();
+        long     time1 = 0;
+        long     time2 = 0;
         try {
             cal.setTime(dateFormat.parse(startTime));
             // 获取开始时间的时间戳
@@ -675,15 +724,13 @@ public class DateUtils {
     /**
      * 获取两个日期之间的所有日期(不包括结束时间)
      *
-     * @param startTime
-     *            开始时间
-     * @param endTime
-     *            结束时间
+     * @param startTime 开始时间
+     * @param endTime   结束时间
      * @return 返回int类型数值
      */
     public static List<String> GetDates(String startTime, String endTime) {
-        Date d1 = new Date();
-        Date d2 = new Date();
+        Date         d1    = new Date();
+        Date         d2    = new Date();
         List<String> dates = new ArrayList<String>();
         try {
             Calendar cal = Calendar.getInstance();
@@ -708,15 +755,13 @@ public class DateUtils {
     /**
      * 获取两个日期之间的所有日期(包括开始时间和结束时间)
      *
-     * @param startTime
-     *            开始时间
-     * @param endTime
-     *            结束时间
+     * @param startTime 开始时间
+     * @param endTime   结束时间
      * @return 返回String类型的集合
      */
     public static List<String> GetDates2(String startTime, String endTime) {
-        Date d1 = new Date();
-        Date d2 = new Date();
+        Date         d1    = new Date();
+        Date         d2    = new Date();
         List<String> dates = new ArrayList<String>();
         try {
             Calendar cal = Calendar.getInstance();
@@ -748,9 +793,9 @@ public class DateUtils {
      * @return 返回int类型数值
      */
     public static List<Integer> hours() {
-        Calendar cal = Calendar.getInstance();
-        Integer curHour = cal.get(Calendar.HOUR_OF_DAY);
-        List<Integer> hours = new ArrayList<Integer>();
+        Calendar      cal     = Calendar.getInstance();
+        Integer       curHour = cal.get(Calendar.HOUR_OF_DAY);
+        List<Integer> hours   = new ArrayList<Integer>();
         for (int i = 0; i <= curHour; i++) {
             hours.add(i);
         }
@@ -760,8 +805,7 @@ public class DateUtils {
     /**
      * 判断传入的是不是当前日期
      *
-     * @param date
-     *            查询时间
+     * @param date 查询时间
      * @return 是返回true，不是返回false
      */
     public static boolean currentDate(String date) {
@@ -784,7 +828,7 @@ public class DateUtils {
         theCa.setTime(new Date());
         // 获取30天前的日期
         theCa.add(theCa.DATE, -30);
-        Date date = theCa.getTime();
+        Date   date   = theCa.getTime();
         String nowDay = dateFormat.format(date);
         return nowDay;
     }
@@ -819,16 +863,15 @@ public class DateUtils {
     /**
      * 判断传入日期是否在当前时间到30天前的日期段内
      *
-     * @param selectDate
-     *            查询时间
+     * @param selectDate 查询时间
      * @return 是返回true，不是返回false
      */
     public static boolean atDateInterval(String selectDate) {
         boolean result = false;
         try {
-            Date date = new Date();
+            Date date     = new Date();
             Date dateTo30 = dateFormat.parse(currentDateTo30());
-            Date sdate = dateFormat.parse(selectDate);
+            Date sdate    = dateFormat.parse(selectDate);
             if (sdate.after(dateTo30) && sdate.before(date)) {
                 result = true;
             }
@@ -842,14 +885,13 @@ public class DateUtils {
     /**
      * 判断传入的日期是不是大于当前日期
      *
-     * @param selectDate
-     *            查询时间
+     * @param selectDate 查询时间
      * @return 是返回true，不是返回false
      */
     public static boolean afterToday(String selectDate) {
         boolean result = false;
         try {
-            Date date = new Date();
+            Date date  = new Date();
             Date sdate = dateFormat.parse(selectDate);
             if (sdate.after(date)) {
                 result = true;
@@ -864,14 +906,13 @@ public class DateUtils {
     /**
      * 判断传入的两个日期的大小(仅限不相等的两个日期比较)
      *
-     * @param selectDate
-     *            查询时间
+     * @param selectDate 查询时间
      * @return 是返回true，不是返回false
      */
     public static boolean dateCompare(String startDate, String endDate) {
         boolean result = false;
         try {
-            Date date = dateFormat.parse(endDate);
+            Date date  = dateFormat.parse(endDate);
             Date sdate = dateFormat.parse(startDate);
             if (date.after(sdate)) {
                 result = true;
@@ -886,14 +927,13 @@ public class DateUtils {
     /**
      * 判断传入的两个日期是否相等
      *
-     * @param selectDate
-     *            查询时间
+     * @param selectDate 查询时间
      * @return 是返回true，不是返回false
      */
     public static boolean dateEquals(String startDate, String endDate) {
         boolean result = false;
         try {
-            Date date = dateFormat.parse(endDate);
+            Date date  = dateFormat.parse(endDate);
             Date sdate = dateFormat.parse(startDate);
             if (date.equals(sdate)) {
                 result = true;
@@ -908,15 +948,13 @@ public class DateUtils {
     /**
      * 时间检查(是否符合格式--开始时间是否小于结束时间--结束时间是否小于当前时间--开始时间是否大于系统上线时间【系统上线时间在配置文件修改】)
      *
-     * @param startTime
-     *            开始时间
-     * @param endTime
-     *            结束时间
+     * @param startTime 开始时间
+     * @param endTime   结束时间
      * @return 正确返回true，错误返回false
      */
     public static boolean isRight(String startTime, String endTime, String systemDate) {
         boolean result = false;
-        int days = -1;
+        int     days   = -1;
         result = isValidDate(startTime);
         if (result) {
             result = isValidDate(endTime);

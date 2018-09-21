@@ -11,42 +11,75 @@ import java.util.List;
  * 如果设置了数组大小,则动态线程数量设置无效
  */
 public class ListThreadUtil {
-    public static <T> List<List<T>> dynamicListThread (List<T> list) {
+    /**
+     * 默认线程数量
+     */
+    private static final Double  DEFAULT_THREAD_COUNT    = 10.0;
+    private static final Double  MORE_THREAD_COUNT       = 20.0;
+    private static final Integer DEFAULT_ARRAYLIST_COUNT = 0;
+
+    public static <T> List<List<T>> dynamicListThread(List<T> list) {
         return dynamicListThread(list, 0, 0);
     }
 
-    public static <T> List<List<T>> dynamicListThread (List<T> list, int threadCountCustom) {
+    public static <T> List<List<T>> dynamicListThread(List<T> list, int threadCountCustom) {
         return dynamicListThread(list, threadCountCustom, 0);
     }
 
-    public static <T> List<List<T>> dynamicListThreadBySize (List<T> list, int dynamicArraySize) {
-        return dynamicListThread(list, 0, dynamicArraySize);
+    public static <T> List<List<T>> dynamicListThreadBySize(List<T> list, int dynamicArraySize) {
+        return dynamicListThread(list, null, dynamicArraySize);
     }
 
 
-    public static <T> List<List<T>> dynamicListThread (List<T> list, int threadCountCustom, int dynamicArraySize) {
+
+    public static <T> List<List<T>> dynamicListThread(List<T> list, Integer threadNum, Integer dynamicArraySize) {
         List<List<T>> resultList = new ArrayList<>();
         // 默认线程数量为10
-        double threadCount = 10.0;
-        int dynamicArrayListSize = 0;
-        if (threadCountCustom == 0 && 0 == dynamicArraySize) {
-            if (200000 <= list.size() && 500000 > list.size()) {
-                // 如果list集合长度为20w到50w之间,则线程数量为20
-                threadCount = 20.0;
-            } else if (500000 <= list.size()) {
-                // 如果list集合长度为50w以上,则线程数量为30
-                threadCount = 30;
+        double threadCount = 0.0;
+        int    midCount    = 300000;
+
+        int dynamicArrayListSize = DEFAULT_ARRAYLIST_COUNT;
+        //
+        if (null == threadNum && null == dynamicArraySize) {
+            //如果再者都为null,则使用默认值,即只按线程数量来分配
+            if (midCount < list.size()) {
+                threadCount = MORE_THREAD_COUNT;
             }
-            // 动态数组大小
+            // 动态数组大小确定
             dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);
-        } else if (0 != threadCountCustom) {
-            threadCount = threadCountCustom;
-            // 动态数组大小
-            dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);
-        } else if (0 != dynamicArraySize) {
-            dynamicArrayListSize = dynamicArraySize;
-            threadCount = (int) Math.ceil(dynamicArrayListSize / threadCount);
+            threadCount = DEFAULT_THREAD_COUNT;
         }
+
+        if (null != threadNum) {
+            // 如果用户传入线程数量,则使用用户的
+            threadCount = threadNum;
+            dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);
+        }
+
+        if (null == threadNum && null != dynamicArraySize) {
+            // 如果用户没有传入线程数量,并且传入每个线程拥有的List大小,
+            threadCount = (int) Math.ceil((double)list.size() / (double)dynamicArraySize);
+            dynamicArrayListSize = dynamicArraySize;
+        }
+
+        // if (threadCountCustom == 0 && 0 == dynamicArraySize) {
+        //     if (200000 <= list.size() && 500000 > list.size()) {
+        //         // 如果list集合长度为20w到50w之间,则线程数量为20
+        //         threadCount = 20.0;
+        //     } else if (500000 <= list.size()) {
+        //         // 如果list集合长度为50w以上,则线程数量为30
+        //         threadCount = 30;
+        //     }
+        //     // 动态数组大小
+        //     dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);
+        // } else if (0 != threadCountCustom) {
+        //     threadCount = threadCountCustom;
+        //     // 动态数组大小
+        //     dynamicArrayListSize = (int) Math.ceil(list.size() / threadCount);
+        // } else if (0 != dynamicArraySize) {
+        //     dynamicArrayListSize = dynamicArraySize;
+        //     threadCount = (int) Math.ceil(dynamicArrayListSize / threadCount);
+        // }
 
         for (int i = 0; i < threadCount; i++) {
             List<T> threadList = new ArrayList<>();

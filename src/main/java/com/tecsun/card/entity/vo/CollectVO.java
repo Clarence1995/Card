@@ -18,6 +18,11 @@ public class CollectVO {
      * 身份证号
      */
     private String certNum;
+
+    /**
+     * 姓名
+     */
+    private String name;
     /**
      * 同步状态
      */

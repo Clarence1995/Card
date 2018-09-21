@@ -6,7 +6,7 @@
        http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.0.xsd"
        default-lazy-init="true">
 
-    <context:property-placeholder ignore-unresolvable="true" location="classpath:config_1.8.properties"/>
+    <context:property-placeholder ignore-unresolvable="true" location="classpath:config_1.8.138.properties"/>
 
     <!-- =>S JTA配置-->
     <!--

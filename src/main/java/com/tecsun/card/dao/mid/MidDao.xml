@@ -19,4 +19,22 @@
          GROUP BY status
          ORDER BY status
     </select>
+
+    <select id="getBasicPersonByIdCardInMid" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+        SELECT address,addressCode,
+        birthday,
+        certType, cert_num as certNum,cert_validity AS certValidity,
+        departmentNo, departmentName, education,
+        express_Address,
+        GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,
+        hkbNo,hkType,hkProperty,
+        isExpress,
+        mobile,
+        name,nation,
+        PARMANENTADDRESS AS parmanentAddress,PARMANENTZIPCODE AS parmanentZipCode,PARMANENTADDRESSCODE AS parmanentAddresscode,personStatus,PHONE,
+        regionalCode,
+        sex
+        FROM (SELECT * FROM BASIC_PERSON_INFO WHERE CERT_NUM = #{idCard} ORDER BY id DESC ) where ROWNUM = 1
+        <!--SELECT * FROM (SELECT * FROM BASIC_PERSON_INFO WHERE CERT_NUM = #{idCard} ORDER BY id DESC ) where ROWNUM = 1-->
+    </select>
 </mapper>

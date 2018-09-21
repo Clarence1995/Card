@@ -1,5 +1,7 @@
 package com.tecsun.card.common.excel;
 
+import com.tecsun.card.common.clarencezeroutils.MyFileUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.hssf.util.HSSFColor;
@@ -15,12 +17,11 @@ import java.util.*;
 
 /**
  * Excel导出
- *
  */
 public class ExcelUtil<E> {
-    private E e;
-    private static SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-    private int etimes = 0;
+    private        E                e;
+    private static SimpleDateFormat sdf    = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private        int              etimes = 0;
 
     public ExcelUtil(E e) {
         this.e = e;
@@ -34,18 +35,12 @@ public class ExcelUtil<E> {
     /**
      * 将数据写入到Excel文件
      *
-     * @param filePath
-     *            文件路径
-     * @param sheetName
-     *            工作表名称
-     * @param title
-     *            工作表标题栏
-     * @param data
-     *            工作表数据
-     * @throws FileNotFoundException
-     *             文件不存在异常
-     * @throws IOException
-     *             IO异常
+     * @param filePath  文件路径
+     * @param sheetName 工作表名称
+     * @param title     工作表标题栏
+     * @param data      工作表数据
+     * @throws FileNotFoundException 文件不存在异常
+     * @throws IOException           IO异常
      */
     public static void writeToFile(String filePath, String[] sheetName, List<? extends Object[]> title,
                                    List<? extends List<? extends Object[]>> data) throws FileNotFoundException, IOException {
@@ -66,17 +61,12 @@ public class ExcelUtil<E> {
      * 如果工作表的数目大于工作表数据的集合，那么首先会根据顺序一一创建对应的工作表名称和数据集合，然后创建的工作表里面是没有数据的<br>
      * 如果工作表的数目小于工作表数据的集合，那么多余的数据将不会写入工作表中 </b>
      *
-     * @param sheetName
-     *            工作表名称的数组
-     * @param title
-     *            每个工作表名称的数组集合
-     * @param data
-     *            每个工作表数据的集合的集合
+     * @param sheetName 工作表名称的数组
+     * @param title     每个工作表名称的数组集合
+     * @param data      每个工作表数据的集合的集合
      * @return Workbook工作簿
-     * @throws FileNotFoundException
-     *             文件不存在异常
-     * @throws IOException
-     *             IO异常
+     * @throws FileNotFoundException 文件不存在异常
+     * @throws IOException           IO异常
      */
     public static Workbook getWorkBook(String[] sheetName, List<? extends Object[]> title,
                                        List<? extends List<? extends Object[]>> data) throws FileNotFoundException, IOException {
@@ -91,7 +81,7 @@ public class ExcelUtil<E> {
         Cell cell = null;
         // 单元格样式
         CellStyle titleStyle = wb.createCellStyle();
-        CellStyle cellStyle = wb.createCellStyle();
+        CellStyle cellStyle  = wb.createCellStyle();
         // 字体样式
         Font font = wb.createFont();
         // 粗体
@@ -160,19 +150,17 @@ public class ExcelUtil<E> {
     /**
      * 将数据写入到EXCEL文档
      *
-     * @param list
-     *            数据集合
-     * @param edf
-     *            数据格式化，比如有些数字代表的状态，像是0:女，1：男，或者0：正常，1：锁定，变成可读的文字
-     *            该字段仅仅针对Boolean,Integer两种类型作处理
-     * @param filePath
-     *            文件路径
+     * @param list     数据集合
+     * @param edf      数据格式化，比如有些数字代表的状态，像是0:女，1：男，或者0：正常，1：锁定，变成可读的文字
+     *                 该字段仅仅针对Boolean,Integer两种类型作处理
+     * @param filePath 文件路径
      * @throws Exception
      */
     public static <T> void writeToFile(List<T> list, ExcelDataFormatter edf, String filePath) throws Exception {
         // 创建并获取工作簿对象
         Workbook wb = getWorkBook(list, edf);
         // 写入到文件
+        MyFileUtils.generateFilePath(filePath);
         FileOutputStream out = new FileOutputStream(filePath);
         wb.write(out);
         out.close();
@@ -181,8 +169,7 @@ public class ExcelUtil<E> {
     /**
      * 获得Workbook对象
      *
-     * @param list
-     *            数据集合
+     * @param list 数据集合
      * @return Workbook
      * @throws Exception
      */
@@ -190,8 +177,9 @@ public class ExcelUtil<E> {
         // 创建工作簿
         Workbook wb = new SXSSFWorkbook();
 
-        if (list == null || list.size() == 0)
+        if (list == null || list.size() == 0) {
             return wb;
+        }
 
         // 创建一个工作表sheet
         Sheet sheet = wb.createSheet();
@@ -217,8 +205,8 @@ public class ExcelUtil<E> {
         // 设置字体
         titleStyle.setFont(font);
 
-        int columnIndex = 0;
-        Excel excel = null;
+        int   columnIndex = 0;
+        Excel excel       = null;
         // 通过对注解@Excel反射获取字段名以及注解配置,再通过遍历生成表头
         for (Field field : fields) {
             field.setAccessible(true);
@@ -259,8 +247,9 @@ public class ExcelUtil<E> {
 
                 o = field.get(t);
                 // 如果数据为空，跳过
-                if (o == null)
+                if (o == null) {
                     continue;
+                }
 
                 // 处理日期类型
                 if (o instanceof Date) {
@@ -281,9 +270,7 @@ public class ExcelUtil<E> {
                             cell.setCellValue(map.get(bool.toString().toLowerCase()));
                         }
                     }
-
                 } else if (o instanceof Integer) {
-
                     Integer intValue = (Integer) field.get(t);
                     if (edf == null) {
                         cell.setCellValue(intValue);
@@ -296,7 +283,17 @@ public class ExcelUtil<E> {
                         }
                     }
                 } else {
-                    cell.setCellValue(field.get(t).toString());
+                    String strValue = field.get(t).toString();
+                    if (null == edf) {
+                        cell.setCellValue(strValue);
+                    } else {
+                       Map<String, String> map = edf.get(field.getName());
+                       if (null == map) {
+                           cell.setCellValue(strValue);
+                       } else {
+                           cell.setCellValue(map.get(strValue));
+                       }
+                    }
                 }
                 columnIndex++;
             }
@@ -309,11 +306,8 @@ public class ExcelUtil<E> {
     /**
      * 从文件读取数据，最好是所有的单元格都是文本格式，日期格式要求yyyy-MM-dd HH:mm:ss,布尔类型0：真，1：假
      *
-     * @param edf
-     *            数据格式化
-     *
-     * @param file
-     *            Excel文件，支持xlsx后缀，xls的没写，基本一样
+     * @param edf  数据格式化
+     * @param file Excel文件，支持xlsx后缀，xls的没写，基本一样
      * @return
      * @throws Exception
      */
@@ -332,7 +326,7 @@ public class ExcelUtil<E> {
         }
 
         InputStream is = new FileInputStream(file);
-        Workbook wb = null;
+        Workbook    wb = null;
         if (file.getName().endsWith(".xls")) {
             wb = new HSSFWorkbook(is);
         } else if (file.getName().endsWith(".xlsx")) {
@@ -342,7 +336,7 @@ public class ExcelUtil<E> {
         }
 
         Sheet sheet = wb.getSheetAt(0);
-        Row title = sheet.getRow(0);
+        Row   title = sheet.getRow(0);
         // 标题数组，后面用到，根据索引去标题名称，通过标题名称去字段名称用到 textToKey
         String[] titles = new String[title.getPhysicalNumberOfCells()];
         for (int i = 0; i < title.getPhysicalNumberOfCells(); i++) {
@@ -353,12 +347,12 @@ public class ExcelUtil<E> {
 
         E e = null;
 
-        int rowIndex = 0;
-        int columnCount = titles.length;
-        Cell cell = null;
-        Row row = null;
+        int  rowIndex    = 0;
+        int  columnCount = titles.length;
+        Cell cell        = null;
+        Row  row         = null;
 
-        for (Iterator<Row> it = sheet.rowIterator(); it.hasNext();) {
+        for (Iterator<Row> it = sheet.rowIterator(); it.hasNext(); ) {
 
             row = it.next();
             if (rowIndex++ == 0) {
@@ -388,12 +382,9 @@ public class ExcelUtil<E> {
      * 使用各种方法，知道尝试到读到数据为止，然后根据Bean的数据类型，进行相应的转换<br>
      * 如果尝试完了（总共7次），还是不能得到数据，那么抛个异常出来，没办法了
      *
-     * @param key
-     *            当前单元格对应的Bean字段
-     * @param fields
-     *            Bean所有的字段数组
-     * @param cell
-     *            单元格对象
+     * @param key    当前单元格对应的Bean字段
+     * @param fields Bean所有的字段数组
+     * @param cell   单元格对象
      * @param e
      * @throws Exception
      */
@@ -434,8 +425,8 @@ public class ExcelUtil<E> {
             for (Field field : fields) {
                 field.setAccessible(true);
                 if (field.getName().equals(key)) {
-                    Boolean bool = true;
-                    Map<String, String> map = null;
+                    Boolean             bool = true;
+                    Map<String, String> map  = null;
                     if (edf == null) {
                         bool = false;
                     } else {

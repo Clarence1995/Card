@@ -197,9 +197,9 @@ public class DealBatchService {
                     //生成申领表编码,规则：账号+区域id+10位流水号（8位年月日+2位随机数）
                     BusApplyPO busApplyPO = new BusApplyPO();
                     // 普通换卡
-                    busApplyPO.setBusinessType(Constants.BUSINESS_TYPE_06);
+                    // busApplyPO.setBusinessType(Constants.BUSINESS_TYPE_06);
                     // 00 申请
-                    busApplyPO.setStatus(Constants.APPLY_STATUS_00);
+                    // busApplyPO.setStatus(Constants.APPLY_STATUS_00);
                     // 个人申领
                     busApplyPO.setSource("01");
                     // 区域编码

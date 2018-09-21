@@ -64,7 +64,7 @@ public class UserInfoValidateAndCopyPhotoThreadTask implements Runnable {
                     beanDao.setSynchroStatus("42");
                     beanDao.setDealMsg(basicBean.getDealMsg());
                     beanDao.setDealStaus("04");
-                    collectService.updateBasicPersonInfoStatus(beanDao);
+                    collectService.updateUserInfoStatusByIdCardAndName(beanDao);
                     continue;
                 }
 
@@ -82,7 +82,7 @@ public class UserInfoValidateAndCopyPhotoThreadTask implements Runnable {
                         logger.info("[采集库] 人员: " + idCard + " 照片复制成功");
                         beanDao.setSynchroStatus("45");
                         beanDao.setDealStaus("10");
-                        collectService.updateBasicPersonInfoStatus(beanDao);
+                        collectService.updateUserInfoStatusByIdCardAndName(beanDao);
                         logger.info("[采集库] 人员: " + idCard + "更新状态为 45 10 ");
                     } catch (IOException e) {
                         logger.error("照片复制失败");

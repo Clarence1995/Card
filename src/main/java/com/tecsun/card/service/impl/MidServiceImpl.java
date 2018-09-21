@@ -3,6 +3,7 @@ package com.tecsun.card.service.impl;
 import com.tecsun.card.dao.mid.MidDao;
 import com.tecsun.card.entity.beandao.mid.MidImgDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
+import com.tecsun.card.entity.po.BasicPersonInfoPO;
 import com.tecsun.card.service.MidService;
 import org.springframework.stereotype.Service;
 
@@ -31,5 +32,10 @@ public class MidServiceImpl implements MidService {
     @Override
     public List<VisualDataDoughunDAO> getVDCollectAC01 () {
         return midDao.getVDCollectAC01();
+    }
+
+    @Override
+    public BasicPersonInfoPO getBasicInfoByIdCard(String idCard) {
+        return midDao.getBasicPersonByIdCardInMid(idCard);
     }
 }

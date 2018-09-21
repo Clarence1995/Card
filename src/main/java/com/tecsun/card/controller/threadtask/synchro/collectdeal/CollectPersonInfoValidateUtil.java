@@ -1,5 +1,6 @@
 package com.tecsun.card.controller.threadtask.synchro.collectdeal;
 
+import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.common.clarencezeroutils.ValidateUtil;
 import com.tecsun.card.entity.po.BasicPersonInfoPO;
 import org.apache.commons.lang.StringUtils;

@@ -3,6 +3,8 @@ package com.tecsun.card.common.txt;
 
 import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.lang.reflect.Field;
@@ -15,6 +17,8 @@ import java.nio.charset.CharsetEncoder;
 import java.util.*;
 
 public class TxtUtil<E> {
+    private static final Logger logger = LoggerFactory.getLogger(TxtUtil.class);
+
     public static void main(String[] args) throws IOException {
         File file = new File("D://Data//yaan//txt//6.txt");
 
@@ -76,6 +80,7 @@ public class TxtUtil<E> {
             }
         });
         TxtUtil.writeTxt(new File(srcFile), "UTF-8", stringList);
+        logger.info("[文本格式化] 成功写入文件, 路径为: {}", srcFile );
     }
 
     /**

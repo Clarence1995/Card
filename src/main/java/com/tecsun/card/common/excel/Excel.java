@@ -14,11 +14,11 @@ import java.lang.annotation.Target;
 @Target({ElementType.FIELD, ElementType.TYPE})
 public @interface Excel {
     // 列名
-    String name () default "";
+    String name() default "";
 
     // 宽度
-    int width () default 20;
+    int width() default 20;
 
     // 忽略该字段
-    boolean skip () default false;
+    boolean skip() default false;
 }

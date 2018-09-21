@@ -63,13 +63,13 @@ public class CollectToCardSynchroThreadTask implements Runnable {
     /**
      * 错误文件夹路径
      */
-    private String errorImgpath = "E://errorImg//";
+    private String errorImgpath = "E://synchroClarence//errorImg//";
 
     /**
      * 是否需要从数据库获取照片,如果不需要复制照片,则需要传入照片路径
      */
     private boolean getImgFromDatabase = false;
-//    public CollectToCardSynchroThreadTask(CollectService collectService,
+//    public DataSynchroRunnable(CollectService collectService,
 //                                          CardService cardService,
 //                                          List<BasicPersonInfoPO> beanList,
 //                                          String logPath,
@@ -81,7 +81,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
 //        this.beanList = beanList;
 //    }
 //
-//    public CollectToCardSynchroThreadTask(CollectService collectService,
+//    public DataSynchroRunnable(CollectService collectService,
 //                                          CardService cardService,
 //                                          List<BasicPersonInfoPO> beanList,
 //                                          String imgPath) {
@@ -92,7 +92,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
 //        this.imgPath = imgPath;
 //    }
 //
-//    public CollectToCardSynchroThreadTask(CollectService collectService,
+//    public DataSynchroRunnable(CollectService collectService,
 //                                          MidService midService,
 //                                          CardService cardService,
 //                                          List<BasicPersonInfoPO> beanList,
@@ -114,6 +114,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
      */
     public CollectToCardSynchroThreadTask(CollectService collectService,
                                           CardService cardService,
+                                          MidService midService,
                                           List<BasicPersonInfoPO> beanList,
                                           List<String> idCardList,
                                           String imgPath,
@@ -122,6 +123,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
     ) {
         this.collectService = collectService;
         this.cardService = cardService;
+        this.midService = midService;
         this.beanList = beanList;
         this.idCardList = idCardList;
         this.imgPath = imgPath;
@@ -141,6 +143,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
         String threadName = Thread.currentThread().getName();
         // 当前线程处理的人数
         int               totalNum  = idCardList.size();
+        ArrayList<String> successList = new ArrayList<>();
         ArrayList<String> errorList = new ArrayList<>();
         for (String idCard : idCardList) {
             try {
@@ -152,17 +155,19 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                 // 1、卡管是否存在
                 CollectVO collectVO = new CollectVO();
                 collectVO.setCertNum(idCard);
-                boolean userExist = cardService.userExistInCard(idCard, null);
-                if (userExist) {
-                    // 1-1、如果卡管存在此人,则更新此人在采集库的同步状态
-                    collectVO.setSynchroStatus(Constants.COLLECT_HAD_SYNCHRO);
-                    collectVO.setDealStaus(Constants.COLLECT_QUALIFIED);
-                    collectService.updateBasicPersonInfoStatus(collectVO);
-                    logger.info("[采集库 => 卡管库] 此人{} 已存在卡管库,不进行同步更新", idCard);
-                    continue;
-                }
+//                 boolean userExist = cardService.userExistInCard(idCard, null);
+//                 if (userExist) {
+//                     // 1-1、如果卡管存在此人,则更新此人在采集库的同步状态
+// //                    collectVO.setSynchroStatus(Constants.COLLECT_HAD_SYNCHRO);
+// //                    collectVO.setDealStaus(Constants.COLLECT_QUALIFIED);
+// //                    collectService.updateUserInfoStatusByIdCardAndName(collectVO);
+//                     logger.info("[采集库 => 卡管库] 此人{} 已存在卡管库,不进行同步更新", idCard);
+//                     successList.add(idCard + "_" + "卡管库已存在此人");
+//                     continue;
+//                 }
 
-                BasicPersonInfoPO basicPersonInfoPO = collectService.getBasicInfoByIDCard(idCard);
+//                BasicPersonInfoPO basicPersonInfoPO = collectService.getBasicInfoByIDCard(idCard);
+                BasicPersonInfoPO basicPersonInfoPO = midService.getBasicInfoByIdCard(idCard);
                 if (null == basicPersonInfoPO) {
                     // 采集库不存在此人
                     logger.info("[采集库 => 卡管库] 此人{} 不存在采集库", idCard);
@@ -170,15 +175,15 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                     continue;
                 }
                 // 2、人员信息校验
-                boolean validateSuccess = collectService.validateBasicPersonInfo(basicPersonInfoPO);
+                boolean validateSuccess = collectService.validateuserInfo(basicPersonInfoPO);
                 if (!validateSuccess) {
                     // 如果校验不成功,则跳出FOR循环,并更新用户信息 同步状态为:0 数据处理状态为 04
-                    collectVO.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
-                    collectVO.setDealStaus(Constants.COLLECT_USERINFO_ERROR);
-                    collectVO.setDealMsg(basicPersonInfoPO.getDealMsg());
-                    collectService.updateBasicPersonInfoStatus(collectVO);
-                    logger.info("[采集库 => 卡管库] 人员:{} 信息校验失败", basicPersonInfoPO.getCertNum());
-                    errorList.add(idCard + "_" + "校验失败");
+//                    collectVO.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
+//                    collectVO.setDealStaus(Constants.COLLECT_USERINFO_ERROR);
+//                    collectVO.setDealMsg(basicPersonInfoPO.getDealMsg());
+//                    collectService.updateUserInfoStatusByIdCardAndName(collectVO);
+                    logger.info("[采集库 => 卡管库] 人员:{} 信息校验失败~ {}", basicPersonInfoPO.getCertNum(), basicPersonInfoPO.getDealMsg());
+                    errorList.add(idCard + "_" + basicPersonInfoPO.getDealMsg());
                     // 较验失败
                     FileUtils.copyFile(new File(srcImgPath), new File(errorImgpath + idCard + ".jpg"));
                     continue;
@@ -223,7 +228,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                                 collectVO.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
                                 collectVO.setDealStaus(Constants.COLLECT_IMG_ERROR);
                                 collectVO.setDealMsg("不存在公安照片");
-                                collectService.updateBasicPersonInfoStatus(collectVO);
+                                collectService.updateUserInfoStatusByIdCardAndName(collectVO);
                                 continue;
                             }
                         }
@@ -244,7 +249,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                 }
 
                 // 4、藏文
-                String zangName = collectService.getZangName(idCard);
+                String zangName = collectService.getZangNameByIdCard(idCard);
                 if (null != zangName && !("").equals(zangName)) {
                     basicPersonInfoPO.setZangName(zangName);
                 } else {
@@ -252,7 +257,11 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                 }
 
                 // 5、数据库同步
-                cardService.assembleAC01(ac01PO, basicPersonInfoPO);
+                try {
+                    cardService.assembleAC01(ac01PO, basicPersonInfoPO);
+                } catch (Exception e) {
+
+                }
                 basicPersonInfoPO.setRegionalCode(ac01PO.getAac301());
                 boolean synchroBean = cardService.insertCardAC01AndBusApplyFromCollect(ac01PO, basicPersonInfoPO);
 
@@ -275,10 +284,17 @@ public class CollectToCardSynchroThreadTask implements Runnable {
             str.append(logPath);
             str.append(File.separator);
             str.append(df.format(new Date()));
-            str.append("_" + threadName);
+            str.append("_" + "success");
             str.append("_" + totalNum);
             str.append(".txt");
-            TxtUtil.writeTxt(new File(str.toString()), "UTF-8", errorList);
+            TxtUtil.writeTxt(new File(str.toString()), "UTF-8", successList);
+            StringBuilder sb = new StringBuilder(logPath);
+            sb.append(File.separator);
+            sb.append(df.format(new Date()));
+            sb.append("_" + "fail");
+            sb.append("_" + errorList.size());
+            sb.append(".txt");
+            TxtUtil.writeTxt(new File(sb.toString()), "UTF-8", errorList);
         } catch (IOException e) {
             e.printStackTrace();
         }

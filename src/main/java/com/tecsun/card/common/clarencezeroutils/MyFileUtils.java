@@ -1,5 +1,8 @@
 package com.tecsun.card.common.clarencezeroutils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.*;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -12,7 +15,41 @@ import java.util.zip.ZipOutputStream;
  * @author 0214
  */
 public class MyFileUtils {
+    private static final String SEPARATTOR = File.separator;
     private static final int BUFFER_SIZE = 2 * 1024;
+    private static final String DOT = ".";
+    private static final int WITHOUT_PATTERN = -1;
+    private static final Logger logger = LoggerFactory.getLogger(MyFileUtils.class);
+
+    public static void main(String[] args) {
+        String s1 = "E:\\MyTest\\zip\\zip";
+        System.out.println(s1.lastIndexOf("."));
+        // generateFilePath(s1);
+    }
+
+    public static void  generateFilePath(String filePath) {
+        if (ObjectUtils.isEmpty(filePath)) {
+            throw new NullPointerException("[0214 文件工具类] 文件路径不能为空");
+        }
+        File file = new File(filePath);
+        if (WITHOUT_PATTERN == filePath.lastIndexOf(DOT)) {
+            // 表明是路径
+            if (!file.exists()) {
+                file.mkdirs();
+                logger.info("[0214 文件工具类] 文件夹创建完成: 路径为: " + filePath);
+            }
+        } else {
+            if (!file.getParentFile().exists()) {
+                file.getParentFile().mkdirs();
+                try {
+                    file.createNewFile();
+                    logger.info("[0214 文件工具类] 文件创建完成: 路径为: " + filePath);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
 
     /**
      * 获取路径下的所有文件名

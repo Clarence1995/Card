@@ -41,6 +41,8 @@ public class CollectToCardUserSynchroController {
     @Autowired
     private MidService midService;
 
+
+
     @RequestMapping(value = "collecttocard", method = RequestMethod.POST)
     @ResponseBody
     public Result collectToCard(@RequestBody CollectVO collectVO) {
@@ -61,7 +63,7 @@ public class CollectToCardUserSynchroController {
         List<BasicPersonInfoPO>       qualifiedUserList = collectService.listQualifiedBasicPerson(collectVO);
         List<List<BasicPersonInfoPO>> basicPersonList   = ListThreadUtil.dynamicListThread(qualifiedUserList, threadCount);
         for (List<BasicPersonInfoPO> basicPersonInfoPOS : basicPersonList) {
-            ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, basicPersonInfoPOS, null, imgPath, null, false));
+            ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, midService, basicPersonInfoPOS, null, imgPath, null, false));
         }
         return null;
     }
@@ -104,7 +106,7 @@ public class CollectToCardUserSynchroController {
             List<BasicPersonInfoPO>       qualifiedUserList = collectService.listQualifiedBasicPerson(collectVO);
             List<List<BasicPersonInfoPO>> basicPersonList   = ListThreadUtil.dynamicListThread(qualifiedUserList, threadCount);
             for (List<BasicPersonInfoPO> basicPersonInfoPOS : basicPersonList) {
-                ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, basicPersonInfoPOS, null, imgPath, null, false));
+                ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, midService, basicPersonInfoPOS, null, imgPath, null, false));
             }
         } else if (null != imgPath && !("").equals(imgPath)) {
             // 否则,则文件夹获取身份证信息,进行同步
@@ -116,7 +118,7 @@ public class CollectToCardUserSynchroController {
             for (List<String> stringList : idCardThreadList) {
                 // 交付线程执行 stringList 包含人员身份证信息
                 ThreadPoolUtil.getThreadPool()
-                        .execute(new CollectToCardSynchroThreadTask(collectService, cardService, null, stringList, imgPath, logPath, false));
+                        .execute(new CollectToCardSynchroThreadTask(collectService, cardService, midService, null, stringList, imgPath, logPath, false));
             }
         }
 
@@ -137,27 +139,27 @@ public class CollectToCardUserSynchroController {
             str.append(idCard );
             boolean photoResult = true;
             // 1、判断卡管库是否存在此人
-            boolean exit = cardService.userExistInCard(idCard, null);
-            if (exit) {
-                successList.add(idCard + "_卡管存在");
-                continue;
-            }
+            // boolean exit = cardService.userExistInCard(idCard, null);
+            // if (exit) {
+            //     successList.add(idCard + "_卡管存在");
+            //     continue;
+            // }
 
             // 2、判断采集库是否存在
-            BasicPersonInfoPO collectUser = collectService.getBasicInfoByIDCard(idCard);
+            BasicPersonInfoPO collectUser = collectService.getBasicInfoByIDCard(idCard, null);
             if (!ObjectUtils.notEmpty(collectUser)) {
                 errorList.add(idCard + "_采集库不存在");
                 continue;
             }
 
             // 3、判断人员基础信息 采集库存在、卡管库不存在,
-            boolean validateResult = collectService.validateBasicPersonInfo(collectUser);
-            if (validateResult) {
-                str.append("_信息校验成功");
-            } else {
-                photoResult = false;
-                str.append("_" + collectUser.getDealMsg());
-            }
+            // boolean validateResult = collectService.validateBasicPersonInfo(collectUser);
+            // if (validateResult) {
+            //     str.append("_信息校验成功");
+            // } else {
+            //     photoResult = false;
+            //     str.append("_" + collectUser.getDealMsg());
+            // }
             // 4、判断数据库是否存在照片
             MidImgDAO midImgDAO = midService.getImgFromGONGAN(idCard);
             if (null == midImgDAO) {
