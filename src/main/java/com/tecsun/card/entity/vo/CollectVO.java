@@ -62,4 +62,17 @@ public class CollectVO {
      */
     private String badyCard;
 
+    /**
+     * 是否已完成东软单位信息同步 0: 未同步 1、已同步 2:此人在东软视图中不存在信息
+     */
+    private Integer dongRuanSynchroStatus;
+
+    /**
+     * 单位名称
+     */
+    private String departmentName;
+    /**
+     * 单位编号
+     */
+    private String departmentNo;
 }

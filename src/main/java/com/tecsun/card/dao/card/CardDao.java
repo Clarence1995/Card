@@ -25,6 +25,7 @@ public interface CardDao {
 
     /**
      * 根据name和idcard获取数量
+     *
      * @return java.util.List<java.lang.String>
      * @Description
      * @param: idCard
@@ -37,7 +38,7 @@ public interface CardDao {
 
     /**
      * @return
-     * @Description  获取AC01详细信息, 去重(获取ID最大的那条记录)
+     * @Description 获取AC01详细信息, 去重(获取ID最大的那条记录)
      * @params
      * @author 0214
      * @createTime 2018-09-14 16:47
@@ -45,9 +46,37 @@ public interface CardDao {
      */
     Ac01PO getAC01DetailByIdCardAndName(@Param("idCard") String idCard, @Param("name") String name);
 
+    /**
+     * @return com.tecsun.card.entity.po.AZ01PO
+     * @Description 通过userId获取卡详情
+     * @param: cardId
+     * @author 0214
+     * @createTime 2018-09-25 10:47
+     * @updateTime
+     */
     AZ01PO getCardByUserId(@Param("cardId") Long cardId);
 
+    /**
+     * @return
+     * @Description 获取卡管库所有人员ID和姓名
+     * @param: null
+     * @author 0214
+     * @createTime 2018-09-25 10:46
+     * @updateTime
+     */
+    List<Ac01DAO> listAllUserIdCardAndName();
 
+
+    /**
+     * @return java.util.List<com.tecsun.card.entity.po.Ac01PO>
+     * @Description 通过区域ID、人员状态获取人员详情
+     * @param: regionalCode
+     * @param: userStatus
+     * @author 0214
+     * @createTime 2018-09-26 16:07
+     * @updateTime
+     */
+    List<Ac01PO> getAC01DetailByRegeionalCodeAndStatus(@Param("regionalCode")String regionalCode, @Param("userStatus")String userStatus);
 
     // ~ UPDATE  ---------------------------------------------
 
@@ -61,7 +90,6 @@ public interface CardDao {
     int updateAC01Status(Ac01DAO Ac01DAO);
 
 
-
     // ~ DELETE  ---------------------------------------------
 
     /**
@@ -72,28 +100,23 @@ public interface CardDao {
     List<Ac01PO> listAllAC01();
 
 
-
     // ~ INSERT  ---------------------------------------------
 
     /**
-     * @Description  插入AC01表
+     * @return int
+     * @Description 插入AC01表
      * @param: ac01PO
-     * @return  int
-     * @author  0214
+     * @author 0214
      * @createTime 2018-09-20 10:59
      * @updateTime
      */
     int insertUser(Ac01PO ac01PO);
 
 
-
-
-
     int insertBusApply(BusApplyPO busApplyPO);
 
 
     long getUserSeq();
-
 
 
     List<VisualDataDoughunDAO> getVDCollectAC01();

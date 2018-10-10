@@ -30,7 +30,7 @@
     <select id="getZangName" resultType="java.lang.String">
         SELECT XM FROM (SELECT id,XM FROM ZANG_WEN WHERE SFZH = #{idCard} ORDER BY id DESC) WHERE ROWNUM = 1
     </select>
-    <select id="listBasicBeanByIdList" parameterType="list"
+    <select id="listBasicBeanByIdList" parameterType="java.util.List"
             resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
         SELECT * FROM BASIC_PERSON_INFO WHERE CERT_NUM IN
         <foreach collection="list" index="index" item="idCard" open="(" close=")" separator=",">
@@ -106,6 +106,7 @@
         GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,
         hkbNo,hkType,hkProperty,
         isExpress,
+        id,
         mobile,
         name,nation,
         PARMANENTADDRESS AS parmanentAddress,PARMANENTZIPCODE AS parmanentZipCode,PARMANENTADDRESSCODE AS
@@ -121,6 +122,11 @@
                 AND NAME = #{name}
             </if>
         </where>
+    </select>
+
+    <!-- 获取所有采集表的人员ID和姓名-->
+    <select id="listAllUserIDCardAndName" resultType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO">
+      SELECT CERT_NUM AS certNum, NAME FROM BASIC_PERSON_INFO
     </select>
     <!-- ~SELECT =======================-->
 
@@ -145,7 +151,19 @@
             </if>
             <if test="babyCard != null and babyCard != ''">
                 <!-- 是否为婴儿卡-->
-                babyCard = #{babyCard}
+                babyCard = #{babyCard},
+            </if>
+            <if test="departmentName != null and departmentName != ''">
+                <!-- 单位名称-->
+                departmentName= #{departmentName},
+            </if>
+            <if test="babyCard != null and babyCard != ''">
+                <!-- 单位编号-->
+                departmentNo = #{departmentNo},
+            </if>
+            <if test="dongRuanSynchroStatus != null and dongRuanSynchroStatus != ''">
+                <!-- 东软同步状态-->
+                dongRuan_Synchro_Status = #{dongRuanSynchroStatus},
             </if>
         </set>
         <where>
@@ -181,6 +199,7 @@
            #{id}
         </foreach>
     </update>
+
 
 
 </mapper>

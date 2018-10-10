@@ -3,6 +3,7 @@ package com.tecsun.card.service.impl;
 import com.tecsun.card.common.clarencezeroutils.HandleCollectDateUtils;
 import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.dao.collect.CollectDao;
+import com.tecsun.card.dao.midtwenty.MidTwenty;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
@@ -24,7 +25,10 @@ import java.util.List;
 @Service("collectService")
 public class CollectServiceImpl implements CollectService {
     public static void main(String[] args) {
-        System.out.println("511621199501157759".substring(6, 14));
+        BasicPersonInfoDAO basicBeanDao = new BasicPersonInfoDAO();
+        CollectVO          collectVO    = new CollectVO();
+        basicBeanDao.setDongRuanSynchroStatus(collectVO.getDongRuanSynchroStatus());
+        System.out.println(collectVO);
     }
 
     private final static Logger     logger       = LoggerFactory.getLogger(CollectServiceImpl.class);
@@ -35,6 +39,9 @@ public class CollectServiceImpl implements CollectService {
 
     @Autowired
     private CardService cardService;
+
+    @Autowired
+    private MidTwenty midTwenty;
 
     // ~ GET
 
@@ -80,6 +87,24 @@ public class CollectServiceImpl implements CollectService {
         return collectDao.getUserInfoWithRepeat(idCard, name);
     }
 
+
+    /**
+     * @return java.util.List<java.lang.String>
+     * @Description 获取所有采集表的IdCard
+     * @param:
+     * @author 0214
+     * @createTime 2018-09-25 10:32
+     * @updateTime
+     */
+    @Override
+    public List<BasicPersonInfoDAO> listAllUserIDCard() {
+        return collectDao.listAllUserIDCardAndName();
+    }
+
+    @Override
+    public BasicPersonInfoPO getSingleBasicPersonByIdcardFromMidTwenty(String idCard, String name) {
+        return midTwenty.getSingleBasicPersonByIdcardFromMidTwenty(idCard, name);
+    }
     // ~ UPDATE
 
     /**
@@ -90,14 +115,16 @@ public class CollectServiceImpl implements CollectService {
      */
     @Override
     public int updateUserInfoStatusByIdCardAndName(CollectVO basicDao) {
+        // 组装DAO层类
         BasicPersonInfoDAO basicBeanDao = new BasicPersonInfoDAO();
         basicBeanDao.setCertNum(basicDao.getCertNum());
-        if (null != basicDao.getName()) {
-            basicBeanDao.setName(basicDao.getName());
-        }
+        basicBeanDao.setName(basicDao.getName());
         basicBeanDao.setDealStatus(basicDao.getDealStaus());
         basicBeanDao.setSynchroStatus(basicDao.getSynchroStatus());
         basicBeanDao.setDealMsg(basicDao.getDealMsg());
+        basicBeanDao.setDepartmentName(basicDao.getDepartmentName());
+        basicBeanDao.setDepartmentNo(basicDao.getDepartmentNo());
+        basicBeanDao.setDongRuanSynchroStatus(basicDao.getDongRuanSynchroStatus());
         int a = collectDao.updateUserInfoStatusByIdCardAndName(basicBeanDao);
         return a;
     }

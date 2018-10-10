@@ -49,7 +49,7 @@ public class CardServiceImpl implements CardService {
     // ~ GET ------------------------------------------------
 
     /**
-     *  获取AC01详细信息, 去重(获取ID最大的那条记录)
+     * 获取AC01详细信息, 去重(获取ID最大的那条记录)
      *
      * @return com.tecsun.card.entity.po.Ac01PO
      * @param: idCard
@@ -151,6 +151,34 @@ public class CardServiceImpl implements CardService {
     @Override
     public List<VisualDataDoughunDAO> getVDCollectAC01() {
         return cardDao.getVDCollectAC01();
+    }
+
+    /**
+     * @return java.util.List<com.tecsun.card.entity.beandao.card.Ac01DAO>
+     * @Description 获取卡管库所有人员ID和姓名
+     * @param:
+     * @author 0214
+     * @createTime 2018-09-25 10:45
+     * @updateTime
+     */
+    @Override
+    public List<Ac01DAO> listAllUserIdCard() {
+        return cardDao.listAllUserIdCardAndName();
+    }
+
+    /**
+     * @return java.util.List<com.tecsun.card.entity.po.Ac01PO>
+     * @Description 通过区域ID、人员状态获取人员详情
+     * @param: regionalCode
+     * @param: userStatus
+     * @author 0214
+     * @createTime 2018-09-26 16:03
+     * @updateTime
+     */
+    @Override
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public List<Ac01PO> getAC01DetailByRegeionalCodeAndStatus(String regionalCode, String userStatus) {
+        return cardDao.getAC01DetailByRegeionalCodeAndStatus(regionalCode, userStatus);
     }
 
 

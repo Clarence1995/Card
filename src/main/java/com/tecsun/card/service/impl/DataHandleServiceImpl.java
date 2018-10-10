@@ -1,5 +1,6 @@
 package com.tecsun.card.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.tecsun.card.common.ThreadPoolUtil;
 import com.tecsun.card.common.clarencezeroutils.*;
 import com.tecsun.card.common.excel.ExcelDataFormatter;
@@ -7,16 +8,17 @@ import com.tecsun.card.common.excel.ExcelUtil;
 import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
+import com.tecsun.card.entity.beandao.card.Ac01DAO;
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
+import com.tecsun.card.entity.beandao.dongruan.DongRuanUserInfoDAO;
 import com.tecsun.card.entity.beandao.mid.MidImgDAO;
 import com.tecsun.card.entity.po.AZ01PO;
 import com.tecsun.card.entity.po.Ac01PO;
 import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.entity.vo.UserInfoVO;
-import com.tecsun.card.service.CardService;
-import com.tecsun.card.service.CollectService;
-import com.tecsun.card.service.DataHandleService;
-import com.tecsun.card.service.MidService;
+import com.tecsun.card.service.*;
+import com.tecsun.card.service.threadrunnable.DongRuanSynchroRunnable;
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,6 +39,17 @@ import java.util.*;
  */
 @Service("dataHandleService")
 public class DataHandleServiceImpl implements DataHandleService {
+    public static void main(String[] args) {
+        List<Long> test = new ArrayList<>(4);
+        test.add(0L);
+        test.add(1L);
+        test.add(7L);
+        test.add(2L);
+        Long result = Collections.max(test);
+        System.out.println(result);
+
+        System.out.println(4L - 0L);
+    }
 
     private static final String SEPARATOR                      = File.separator;
     private static final String TSB_COLLECT_ROOT_PATH          = "E:\\tecsun\\photo\\personPhoto\\geren\\";
@@ -49,7 +62,11 @@ public class DataHandleServiceImpl implements DataHandleService {
     private final        String LOG                            = "LOG";
     private final        String LOG_ROOT_FILE_NAME_TXT_SUCCESS = "数据处理结果【成功】（TXT）";
     private final        String LOG_ROOT_FILE_NAME_TXT_FAIL    = "数据处理结果【失败】（TXT）";
+    private final        String SYNCHRO_NAME                   = "[0214 东软单位名称、单位姓名同步]";
     private final        String LOG_ROOT_FILE_NAME_EXCEL       = "数据处理结果（EXCEL）";
+    private final        String COLLECT_DATABASE_NAME          = "COLLECT";
+    private final        String CARD_DATABASE_NAME             = "CARD";
+    private final        String MID_DATABASE_NAME              = "MID";
     private static       int    FAIL_CODE                      = 0;
     private static       int    SUCCESS_CODE                   = 200;
     private final        int    SINGLE_NUM                     = 1;
@@ -58,11 +75,13 @@ public class DataHandleServiceImpl implements DataHandleService {
 
 
     @Autowired
-    private CardService    cardService;
+    private CardService     cardService;
     @Autowired
-    private MidService     midService;
+    private MidService      midService;
     @Autowired
-    private CollectService collectService;
+    private CollectService  collectService;
+    @Autowired
+    private DongRuanService dongRuanService;
 
     /**
      * @return com.tecsun.card.entity.Result
@@ -379,78 +398,145 @@ public class DataHandleServiceImpl implements DataHandleService {
 
 
     /**
-     * @Description  处理采集库人员数据重复 人员重复数据同步状态置为9: 表示可删除,卡管已同步置为1,未同步置为0
+     * @return com.tecsun.card.entity.Result
+     * @Description 处理采集库人员数据重复 人员重复数据同步状态置为9: 表示可删除,卡管已同步置为1,未同步置为0。
+     * 如果卡管库的和采集库的人员信息不等,则需要卡管库里面的人员状态是否为异常,如果为异常,则更新信息,并重新申领
      * @param: logFilePath
-    * @param: threadCount
-     * @return  com.tecsun.card.entity.Result
-     * @author  0214
+     * @param: threadCount
+     * @author 0214
      * @createTime 2018-09-21 15:28
      * @updateTime
      */
     @Override
-    public Result handleCollectDateRepeat(String logFilePath, Integer threadCount) {
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public Result handleCollectDateRepeat(String logFilePath, Integer threadCount) throws IOException {
+        List<String> errorIds = new ArrayList<>();
         // 1、查询重复IDCard
         // 46933
         List<String> idCardList = collectService.getUserRepeatIdCard();
+        logger.info("[0214 采集库人员重复处理] 当前获取到重复人员数量为: {} 人", idCardList.size());
+        // 日志记录
+        List<String> errorLogsList = new ArrayList<>();
+        // 人员重复,卡管库与采集库信息对比全都不过,且状态为19的人员ID,这批人是需要重新更新或删除新增、
+        List<String> userExceptionList = new ArrayList<>();
         // 2、使用单线程处理数据
-        List<String> errorStrList = new ArrayList<>();
         for (String idCard : idCardList) {
-            Long       successId   = 0L;
-            boolean hadSynchro = false;
-            List<Long> errorIdList = new ArrayList<>();
-            BasicPersonInfoDAO updateUserInCollect = new BasicPersonInfoDAO();
-            updateUserInCollect.setCertNum(idCard);
-            // ①、获取人员详情
-            List<BasicPersonInfoPO> currentUserList = collectService.getUserInfoWithRepeat(idCard, null);
-            // ②、获取卡管库中的人员详情
-            Ac01PO userInCard = cardService.getAC01DetailByIdCardAndName(idCard, null);
-            // ③、如果有,则遍历对比,没有,则更新状态
-            if (null != userInCard) {
-                hadSynchro = true;
-                for (BasicPersonInfoPO basicPersonInfoPO : currentUserList) {
-                    boolean result = true;
-                    // 比对 姓名、身份证号、采集区域、手机号码、有效日期
-                    // 姓名比对
-                    if (!basicPersonInfoPO.getName().equals(userInCard.getAac003())) {
-                        result = false;
-                    }
-                    if (!basicPersonInfoPO.getCertNum().equals(userInCard.getAac147())) {
-                        result = false;
-                    }
-                    if (!basicPersonInfoPO.getMobile().equals(userInCard.getAac067())) {
-                        result = false;
+            try {
+                // 将会被更新状态为0/1的ID
+                Long    successId  = 0L;
+                boolean hadSynchro = false;
+                // 将会被更新状态为9的Id集合
+                List<Long>         errorIdList         = new ArrayList<>();
+                StringBuilder      sb                  = new StringBuilder(idCard);
+                BasicPersonInfoDAO updateUserInCollect = new BasicPersonInfoDAO();
+                updateUserInCollect.setCertNum(idCard);
+                // ①、获取人员详情
+                List<BasicPersonInfoPO> currentUserList = collectService.getUserInfoWithRepeat(idCard, null);
+                // ②、获取卡管库中的人员详情
+                Ac01PO userInCard = cardService.getAC01DetailByIdCardAndName(idCard, null);
+                if (null != userInCard) {
+                    // ③、如果有,则遍历对比
+                    hadSynchro = true;
+                    for (BasicPersonInfoPO basicPersonInfoPO : currentUserList) {
+                        boolean result = true;
+                        // 姓名比对
+                        if (!basicPersonInfoPO.getName().equals(userInCard.getAac003())) {
+                            sb.append("_姓名不匹配");
+                            result = false;
+                        }
+                        // 身份证号比对
+                        if (!basicPersonInfoPO.getCertNum().equals(userInCard.getAac147())) {
+                            sb.append("_身份证号不匹配");
+                            result = false;
+                        }
+                        // 手机号比对
+                        if (!basicPersonInfoPO.getMobile().equals(userInCard.getAac067())) {
+                            sb.append("_手机号不匹配");
+                            result = false;
+                        }
+                        // 区域ID比对
+                        if (!basicPersonInfoPO.getRegionalCode().equals(userInCard.getAac301b())) {
+                            sb.append("_区域ID不匹配");
+                            result = false;
+                        }
+                        if (!result) {
+                            errorIdList.add(basicPersonInfoPO.getId());
+                            continue;
+                        }
+                        if (basicPersonInfoPO.getId() > successId) {
+                            if (!(NULL_NUM == successId)) {
+                                errorIdList.add(successId);
+                            }
+                            successId = basicPersonInfoPO.getId();
+                        } else {
+                            errorIdList.add(basicPersonInfoPO.getId());
+                        }
                     }
 
-                    if (!result) {
-                        errorIdList.add(basicPersonInfoPO.getId());
+                    // 卡管库存在,但是所有信息对比不过,则需要判断人员是否为异常状态
+                    if (NULL_NUM == successId) {
+                        if (Constants.USER_STATUS_EXCEPTION.equals(userInCard.getStatus())) {
+                            // 记录数据
+                            userExceptionList.add(idCard + "_所有信息比对失败,且人员状态为异常");
+                            // 我们就需要在采集库中保留最大的ID,并标注
+                            successId = Collections.max(errorIdList);
+                            errorIdList.remove(successId);
+                        } else {
+                            // 我们就需要在采集库中保留最大的ID,并标注
+                            successId = Collections.max(errorIdList);
+                            errorIdList.remove(successId);
+                            if (NULL_NUM == successId) {
+                                errorLogsList.add(idCard + "_找不到能更新状态为0/1的人员ID");
+                                logger.error("人员ID: {}, 找不到能更新状态为0/1的人员ID", idCard);
+                                continue;
+                            }
+                        }
                     }
-                }
-            } else {
-                // 更新人员状态ID最大的那一个
-                for (BasicPersonInfoPO basic : currentUserList) {
-                    if (successId < basic.getId()) {
-                        if (successId != 0L) {
+
+                } else {
+                    // ②、更新人员状态ID最大的那一个
+                    for (BasicPersonInfoPO basic : currentUserList) {
+                        if (successId < basic.getId()) {
+                            if (!(NULL_NUM == successId)) {
+                                errorIdList.add(successId);
+                            }
+                            successId = basic.getId();
+                        } else {
                             errorIdList.add(basic.getId());
                         }
                     }
                 }
-            }
 
-            // ④ 更新数据库
-            List<Long> successIdList = new ArrayList<>(1);
-            successIdList.add(successId);
-            if (hadSynchro) {
-                // 已同步 更新采集库同步状态为1,处理状态为01
-                int successResult = collectService.updateUserInfoStatusByIdList(successIdList, Constants.COLLECT_HAD_SYNCHRO, Constants.COLLECT_QUALIFIED, "合格");
-            } else {
-                // 没有同步, 同步状态为 0
-                int successResult = collectService.updateUserInfoStatusByIdList(successIdList, Constants.COLLECT_NO_SYNCHRO, null, null);
+                // ④ 更新数据库
+                List<Long> successIdList = new ArrayList<>(1);
+                successIdList.add(successId);
+                try {
+                    if (hadSynchro) {
+                        // 已同步 更新采集库同步状态为1,处理状态为01
+                        int successResult = collectService.updateUserInfoStatusByIdList(successIdList, Constants.COLLECT_HAD_SYNCHRO, Constants.COLLECT_QUALIFIED, "合格");
+                    } else {
+                        // 没有同步, 同步状态为 0
+                        int successResult = collectService.updateUserInfoStatusByIdList(successIdList, Constants.COLLECT_NO_SYNCHRO, null, null);
+                    }
+                    int failResult = collectService.updateUserInfoStatusByIdList(errorIdList, Constants.COLLECT_USER_REPEAT, null, null);
+                    logger.info("[0214 采集库重复人员处理] 人员ID: {}, 成功ID: {}, 需要置为9的记录条数: {} 条,分别为:{}", idCard, successId, errorIdList.size(), errorIdList.size(), JSONObject.toJSONString(errorIdList));
+                } catch (Exception e) {
+                    logger.error("[0214 采集库重复人员处理出错: {}", e);
+                    errorLogsList.add(idCard + "_同步异常");
+                    TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+                }
+            } catch (Exception e) {
+                logger.error("[0214 采集库重复人员处理出错] 原因为: {}", e);
+                errorLogsList.add(idCard + "_同步异常");
             }
-            int failResult = collectService.updateUserInfoStatusByIdList(errorIdList, Constants.COLLECT_USER_REPEAT, null, null);
-            logger.info("[0214 采集库重复人员处理] 人员ID: {}, 成功ID: {}, 需要置为9的记录数量: {}", idCard, successId, errorIdList.size(), errorIdList.size());
         }
-
-        return null;
+        // 错误日志记录
+        TxtUtil.writeTxt(new File(logFilePath + Constants.SEPARATOR + "[采集库重复人员处理] 异常数据日志" + Constants.TXT_SUFFIX), "UTF-8", errorLogsList);
+        TxtUtil.writeTxt(new File(logFilePath + Constants.SEPARATOR + "[采集库重复人员处理] 人员重复 卡管采集数据比对全部失败 人员状态异常(19) " + Constants.TXT_SUFFIX), "UTF-8", userExceptionList);
+        Result result = new Result();
+        result.setStateCode(200);
+        result.setMsg("[0214 采集重复人员处理完成,处理人员总数为: " + idCardList.size() + "失败总数为: " + errorLogsList.size());
+        return result;
     }
 
 
@@ -486,6 +572,177 @@ public class DataHandleServiceImpl implements DataHandleService {
             FileUtils.copyFile(file, new File(disImgPath.toString()));
             logger.info("[0214 TSB照片复制成功] 人员ID: {}, 照片目标路径为: {}", idCard, disImgPath);
         }
+        return result;
+    }
+
+    /**
+     * 同步卡管库、采集库单位名称、单位编号(东软)
+     *
+     * @param databaseName 数据库名称 card:卡管库 / collect: 采集库
+     * @param logFilePath  日志文件路径
+     * @param threadCount  线程数
+     * @return
+     */
+    @Override
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public Result handleCollectDepartmentNo(String databaseName, String logFilePath, Integer threadCount) {
+        Result result          = new Result();
+        int    totalCount      = 0;
+        int    threadDealCount = 0;
+        logger.info("~ [0214 单位名称、单位编号数据同步] --- STARTING {} -----------------", DateUtils.todayDate1());
+        // 1、判断更新哪个数据库
+        List<List<BasicPersonInfoDAO>> collectList = null;
+        List<List<Ac01DAO>>            cardList    = null;
+        if (ObjectUtils.isEmpty(databaseName)) {
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
+            result.setMsg("[0214 东软单位名称和单位编号更新出错] databaseName 不能为空");
+            return result;
+        }
+        if (databaseName.toUpperCase().equals(COLLECT_DATABASE_NAME)) {
+            // 获取采集人员表
+            List<BasicPersonInfoDAO> idCardList = collectService.listAllUserIDCard();
+            totalCount = idCardList.size();
+            collectList = ListThreadUtil.dynamicListThread(idCardList, threadCount);
+        } else if (databaseName.toUpperCase().equals(CARD_DATABASE_NAME)) {
+            // 获取卡管库人员表
+            List<Ac01DAO> idCardList = cardService.listAllUserIdCard();
+            totalCount = idCardList.size();
+            cardList = ListThreadUtil.dynamicListThread(idCardList, threadCount);
+        }
+        // 2、开启线程
+        if (null != collectList) {
+            // 采集库更新
+            for (List<BasicPersonInfoDAO> collectListForThread : collectList) {
+                ThreadPoolUtil.getThreadPool().execute(new DongRuanSynchroRunnable(collectListForThread, null, this, logFilePath));
+            }
+            threadDealCount = collectList.get(0).size();
+            logger.info("[0214 采集库单位名称、单位编号更新开始] 线程数量:{}, 待处理记录总数为: {} 条, 每个线程处理数量为:{}条", threadCount, totalCount, threadDealCount);
+        } else if (null != cardList) {
+            // 更新卡管库
+            for (List<Ac01DAO> cardListForThread : cardList) {
+                ThreadPoolUtil.getThreadPool().execute(new DongRuanSynchroRunnable(null, cardListForThread, this, logFilePath));
+            }
+            threadDealCount = cardList.get(0).size();
+            logger.info("[0214 卡管库单位名称、单位编号更新开始] 线程数量:{}, 待处理记录总数为: {} 条, 每个线程处理数量为:{}条", threadCount, totalCount, cardList.get(0).size());
+        }
+        result.setStateCode(200);
+        result.setMsg("所有线程已完全开启, 现在同步的数据库为:" + databaseName + ", 待同步人数为: " + totalCount + "人, 每个线程处理人数为: " + threadDealCount + "人");
+        return result;
+    }
+
+
+    /**
+     * 依据东软数据库更新卡管库、采集库单位名称和单位编号
+     *
+     * @param collectList
+     * @param cardList
+     * @param logFilePath
+     * @return
+     */
+    @Override
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public Result handleDongRuanSynchro(List<BasicPersonInfoDAO> collectList, List<Ac01DAO> cardList, String logFilePath) {
+        Result       result         = new Result();
+        List<String> notExistIdCard = new ArrayList<>();
+        // 总数
+        int total = 0;
+        // 成功人数
+        int success = 0;
+        // 失败人数
+        int fail = 0;
+        // 1、判断是哪个数据库,并获取IDCard和姓名
+        if (null != collectList) {
+            total = collectList.size();
+            // 采集库做好准备,更新采集库单位编号
+            for (BasicPersonInfoDAO basicPersonInfoDAO : collectList) {
+                String userName = basicPersonInfoDAO.getName();
+                String idCard   = basicPersonInfoDAO.getCertNum();
+                try {
+                    // DongRuanUserInfoDAO dongRuanUserInfo = dongRuanService.getDongRuanUserInfoByIdAndName(idCard, userName);
+                    DongRuanUserInfoDAO dongRuanUserInfo = new DongRuanUserInfoDAO();
+                    dongRuanUserInfo.setAAB001("test");
+                    dongRuanUserInfo.setAAB004("hello");
+                    CollectVO collectVO = new CollectVO();
+                    collectVO.setCertNum(idCard);
+                    collectVO.setName(userName);
+                    if (null != dongRuanUserInfo) {
+                        collectVO.setDepartmentNo(dongRuanUserInfo.getAAB001());
+                        collectVO.setDepartmentName(dongRuanUserInfo.getAAB004());
+                        // 更新采集库人员信息
+                        collectVO.setDongRuanSynchroStatus(Constants.DONGRUAN_SYNCHRO_YES);
+                        int a = collectService.updateUserInfoStatusByIdCardAndName(collectVO);
+                        if (a > 0) {
+                            success++;
+                            logger.info("{} 采集库同步完成。人员ID: {} ,姓名:{}, 单位名称: {}, 单位编号:{}",
+                                    SYNCHRO_NAME, idCard, basicPersonInfoDAO.getName(), dongRuanUserInfo.getAAB004(), dongRuanUserInfo.getAAB001());
+                        } else {
+                            notExistIdCard.add(idCard + "_" + userName + "东软信息存在,但是写入采集库失败");
+                            fail++;
+                            logger.info("{} 采集库同步失败。人员ID: {} , 姓名: {}", SYNCHRO_NAME, idCard, userName);
+                        }
+                    } else {
+                        fail++;
+                        collectVO.setDongRuanSynchroStatus(Constants.DONGRUAN_SYNCHRO_NO_INFORMATION);
+                        int a = collectService.updateUserInfoStatusByIdCardAndName(collectVO);
+                        if (a > 0) {
+                            logger.info("{} 采集库同步完成。人员ID: {} 在东软视图库不存在", SYNCHRO_NAME, idCard);
+                        } else {
+                            logger.info("{} 采集库同步失败。人员ID: {} ", SYNCHRO_NAME, idCard);
+                        }
+                    }
+                } catch (Exception e) {
+                    fail++;
+                    notExistIdCard.add(idCard + "_" + userName);
+                    logger.error("{} 采集库同步异常。人员ID: {}, 姓名: {} ,原因: {}", SYNCHRO_NAME, idCard, userName, e);
+                }
+            }
+        } else if (null != cardList) {
+            total = cardList.size();
+            // 卡管库做好准备
+            for (Ac01DAO ac01DAO : cardList) {
+                String  userName = ac01DAO.getAAC003();
+                String  idCard   = ac01DAO.getAAC147();
+                Ac01DAO ac01DAO1 = new Ac01DAO();
+                ac01DAO1.setAAC147(idCard);
+                ac01DAO1.setAAC003(userName);
+                try {
+                    DongRuanUserInfoDAO dongRuanUserInfo = dongRuanService.getDongRuanUserInfoByIdAndName(idCard, userName);
+                    if (null != dongRuanUserInfo) {
+                        ac01DAO1.setAAB001(dongRuanUserInfo.getAAB001());
+                        ac01DAO1.setAAB004(dongRuanUserInfo.getAAB004());
+                        int a = cardService.updateAC01Status(ac01DAO1);
+                        if (a > 0) {
+                            success++;
+                            logger.info("{} 卡管库 同步完成。 人员ID:{}, 姓名:{}, 单位名称: {}, 单位编号:{} ",
+                                    SYNCHRO_NAME, idCard, userName, dongRuanUserInfo.getAAB004(), dongRuanUserInfo.getAAB001());
+                        } else {
+                            fail++;
+                            logger.info("{} 卡管库 同步失败。 人员ID:{} ", SYNCHRO_NAME, idCard);
+                        }
+                    } else {
+                        fail++;
+                        logger.info("{} 人员ID:{} 在东软视图中不存在有效信息", SYNCHRO_NAME, idCard);
+                    }
+                } catch (Exception e) {
+                    fail++;
+                    notExistIdCard.add(idCard + "_" + userName);
+                    logger.error("{} 卡管库同步异常。人员ID: {}, 姓名: {} ,原因: {}", SYNCHRO_NAME, idCard, userName, e);
+                }
+            }
+        }
+        String logAbsoluteFilePath = StringUtils.generateAbsoluteFileName(logFilePath, "单位名称 单位编号更新日志", Constants.TXT_SUFFIX);
+        notExistIdCard.add("此文件夹为单位名称 单位编号同步异常数据, 人数为" + notExistIdCard.size() + " 此线程同步总人数为: " + total + "成功人数:" + success + "失败人数: " + fail);
+        try {
+            TxtUtil.writeTxt(new File(logAbsoluteFilePath), "UTF-8", notExistIdCard);
+        } catch (IOException e) {
+            logger.error("[0214 单位名称、单位编号更新出错,原因: {}", e);
+            result.setStateCode(0);
+            result.setMsg("[0214 单位名称、单位编号更新出错,原因:" + e);
+            return result;
+        }
+
+        result.setStateCode(200);
+        result.setMsg("成功人数: " + success + ", 失败人数: " + fail + "生成日志文件路径为: " + logAbsoluteFilePath);
         return result;
     }
 

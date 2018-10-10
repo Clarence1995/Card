@@ -2,6 +2,7 @@ package springtestenv;
 
 import com.alibaba.fastjson.JSONObject;
 import com.tecsun.card.dao.card.CardDao;
+import com.tecsun.card.dao.collect.CollectDao;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.visualdata.UserDAO;
@@ -9,10 +10,8 @@ import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
 import com.tecsun.card.entity.po.BasicPersonInfoPO;
 import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.entity.vo.CollectVO;
-import com.tecsun.card.service.CardService;
-import com.tecsun.card.service.CollectService;
-import com.tecsun.card.service.MidService;
-import com.tecsun.card.service.SystemService;
+import com.tecsun.card.service.*;
+import com.tecsun.card.service.impl.ExceptionTestServiceImpl;
 import com.tecsun.card.thread.ThreadPool4j;
 import com.tecsun.card.thread.ThreadPool4jImpl;
 import org.junit.Test;
@@ -23,6 +22,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,7 +37,7 @@ import java.util.List;
  */
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration("classpath:/config/beans.xml")
-@Transactional
+// @Transactional
 public class SpirngMybatisTest {
     @Autowired
     CollectService collectService;
@@ -49,6 +49,60 @@ public class SpirngMybatisTest {
     SystemService systemService;
     @Autowired
     CardDao cardDao;
+    @Autowired
+    DataHandleService dataHandleService;
+    @Autowired
+    CollectDao collectDao;
+    @Autowired
+    ExceptionTestServiceImpl exceptionTest;
+
+    @Test
+    public void testException2() {
+        exceptionTest.test();
+    }
+
+    @Test
+    public void testMy() {
+        cardService.getAC01DetailByIdCardAndName("511621199501157759", null);
+    }
+
+    @Test
+    public void testException() {
+        String disImg = "E:\\MyTest2\\info2\\img";
+        try {
+            dataHandleService.getImgFromDatabaseByIdCard("511621199501157759", true, disImg);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    @Test
+    public void testCard() {
+        BasicPersonInfoPO basicPersonInfoPO = collectDao.getSingleBasicPersonByIdcard("511621199501157759", "姜家俊");
+        System.out.println(basicPersonInfoPO);
+    }
+
+    @Test
+    public void test11() {
+        int a = collectDao.getBasicPersonByIdCardAndName("511621199501157759", "姜家俊");
+        System.out.println(a);
+    }
+
+    @Test
+    public void testUserExit() {
+        String name = "";
+        String idCard = "5116211995011577592";
+        // int a = cardService.userExistInCard(idCard, null);
+        // System.out.println(a);
+    }
+    @Test
+    public void testDataHandler() throws IOException {
+        String idCard = "511621199501157759";
+        boolean copy = true;
+        String dis = "E:\\file";
+        dataHandleService.getImgFromDatabaseByIdCard(idCard, copy, dis);
+    }
 
     @Test
     public void testGetCardNum() throws Exception {
@@ -138,9 +192,9 @@ public class SpirngMybatisTest {
         bean.setCertType("e");
         bean.setCertValidity("f");
         bean.setMobile("g");
-        bean.setSex("0");
+//        bean.setSex("0");
         bean.setParmanentAddress("e");
-        System.out.println(collectService.validateBasicPersonInfo(bean));
+        // System.out.println(collectService.validateBasicPersonInfo(bean));
         System.out.println(bean.getDealMsg());
     }
 
@@ -150,14 +204,14 @@ public class SpirngMybatisTest {
         collectVO.setCertNum("542626198012010047");
         collectVO.setSynchroStatus(Constants.COLLECT_HAD_SYNCHRO);
         collectVO.setDealStaus(Constants.COLLECT_QUALIFIED);
-        collectService.updateBasicPersonInfoStatus(collectVO);
+        collectService.updateUserInfoStatusByIdCardAndName(collectVO);
     }
 
     @Test
     public void insertBusApply () {
         BusApplyPO busApplyPO = new BusApplyPO();
-        busApplyPO.setBusinessType(Constants.BUSINESS_TYPE_01); // 01 新申领
-        busApplyPO.setStatus(Constants.APPLY_STATUS_00);        // 00 申领状态: 申请
+        // busApplyPO.setBusinessType(Constants.BUSINESS_TYPE_01); // 01 新申领
+        // busApplyPO.setStatus(Constants.APPLY_STATUS_00);        // 00 申领状态: 申请
         busApplyPO.setSource("00");              // 01 个人申领
         busApplyPO.setRegionalId("510100"); // 区域编码
         busApplyPO.setApplyName("a");
@@ -172,8 +226,8 @@ public class SpirngMybatisTest {
     @Test
     public void CardDaoTest () {
         String idCard = "511621199501157759";
-        boolean result = cardService.userExistInCard(idCard, null);
-        System.out.println(result);
+        // boolean result = cardService.userExistInCard(idCard, null);
+        // System.out.println(result);
     }
 
 

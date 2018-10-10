@@ -46,6 +46,16 @@ public interface CollectDao {
      */
     List<BasicPersonInfoPO> getUserInfoWithRepeat(@Param("idCard")String idCard, @Param("name")String name);
 
+
+    /***
+     * @Description
+     * @param:
+     * @return  java.util.List<java.lang.String>
+     * @author  0214
+     * @createTime 2018-09-25 10:32
+     * @updateTime
+     */
+    List<BasicPersonInfoDAO> listAllUserIDCardAndName();
     // ~ UPDATE
 
     /**
@@ -95,5 +105,6 @@ public interface CollectDao {
      * @return
      */
     Integer getBasicPersonByIdCardAndName(@Param("idCard") String idCard, @Param("username") String username);
+
 
 }

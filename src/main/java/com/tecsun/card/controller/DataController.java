@@ -6,18 +6,14 @@ import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.controller.utilcontroller.thread.ImgZipThread;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
-import com.tecsun.card.entity.beandao.card.Ac01DAO;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
 import com.tecsun.card.service.DataHandleService;
 import com.tecsun.card.service.MidService;
 import com.tecsun.card.service.threadrunnable.DataSynchroRunnable;
-import com.tecsun.card.threadtask.ImgSortoutZipThreadTask;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiImplicitParam;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
-import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,11 +36,7 @@ import java.util.List;
 @Api("[0214] 数据处理接口")
 @RestController
 public class DataController {
-    private final Logger logger       = LoggerFactory.getLogger(getClass());
-    private final String TXTSUFFIX    = ".txt";
-    private final String SEPARATOR    = File.separator;
-    private final int    SUCCESS_CODE = 200;
-    private final int    FAIL_CODE    = 0;
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     /**
      * 数据处理服务类
@@ -52,14 +44,14 @@ public class DataController {
     @Autowired
     private DataHandleService dataHandleService;
     /**
-     * 卡管库处理服务器
+     * 卡管库处理服务类
      */
     @Autowired
     private CardService       cardService;
     @Autowired
     private CollectService    collectService;
     @Autowired
-    private MidService midService;
+    private MidService        midService;
 
     /**
      * @return
@@ -73,14 +65,14 @@ public class DataController {
     @RequestMapping(value = "/test", method = RequestMethod.GET)
     public Result test() {
         Result result = new Result();
-        result.setStateCode(SUCCESS_CODE);
+        result.setStateCode(Constants.SUCCESS_RESULT_CODE);
         result.setMsg("测试成功");
         logger.info("{}{}{}", "hello", "hello", "hello");
         return result;
     }
 
 
-    //~-----------------------------文件、日志处理 Controller START 20180914-------------------------------
+    //~-----------------------------照片、文件、日志处理 Controller START 20180914-------------------------------
 
     /**
      * @return
@@ -95,15 +87,15 @@ public class DataController {
     public Result logFormat(@ApiParam(name = "filePath", value = "文件路径 格式为 D:_file_file.txt", required = true) @PathVariable("filePath") String filePath) {
         Result result = new Result();
         try {
-            filePath = StringUtils.stringFormatPath(filePath, TXTSUFFIX);
+            filePath = StringUtils.stringFormatPath(filePath, Constants.TXT_SUFFIX);
             TxtUtil.textFormat(filePath);
         } catch (IOException e) {
             e.printStackTrace();
-            result.setStateCode(FAIL_CODE);
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
             result.setMsg("日志规整错误: " + e.getMessage());
             return result;
         }
-        result.setStateCode(FAIL_CODE);
+        result.setStateCode(Constants.FAIL_RESULT_CODE);
         result.setMsg("日志规整成功");
         return result;
     }
@@ -122,14 +114,14 @@ public class DataController {
             @ApiParam(name = "filePath", value = "文件夹路径 格式为 D:_file", required = true) @PathVariable("filePath") String filePath) {
         Result result = new Result();
         if (ObjectUtils.isEmpty(filePath)) {
-            result.setStateCode(FAIL_CODE);
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
             result.setMsg("filePath不能为空");
             logger.error("[{}] filePath不能为空", "logSortOut");
             return result;
         }
         filePath = StringUtils.stringFormatPath(filePath, null);
         if (!new File(filePath).isDirectory()) {
-            result.setStateCode(FAIL_CODE);
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
             result.setMsg("filePath 并不是目录");
             logger.error("[{}]filePath 不是目录", "logSortOut");
             return result;
@@ -144,14 +136,14 @@ public class DataController {
                 srcFiles[i] = listFilePath.get(i);
             }
             // 路径为 当前文件夹/2018091410/SORTLOG.txt
-            String logdistFile = filePath + SEPARATOR + DateUtils.getNowYMDHM() + SEPARATOR + "SORTLOG" + TXTSUFFIX;
+            String logdistFile = filePath + Constants.SEPARATOR + DateUtils.getNowYMDHM() + Constants.SEPARATOR + "SORTLOG" + Constants.TXT_SUFFIX;
             TxtUtil.mergeFiles(logdistFile, srcFiles, "UTF-8");
             result.setMsg(DateUtils.getNowYMDHM() + " 日志规整完成, 日志路径为: " + logdistFile + ", 已规整文件数量: " + listFilePath.size());
-            result.setStateCode(SUCCESS_CODE);
+            result.setStateCode(Constants.SUCCESS_RESULT_CODE);
             return result;
         } catch (IOException e) {
             e.printStackTrace();
-            result.setStateCode(FAIL_CODE);
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
             result.setMsg(e.getMessage());
             return result;
         }
@@ -213,6 +205,15 @@ public class DataController {
         return result;
     }
 
+    /**
+     * @return com.tecsun.card.entity.Result
+     * @Description 照片文件重命名, 通过按照一定规则截取字符串以达到重命名
+     * @param: filePath
+     * @param: position
+     * @author 0214
+     * @createTime 2018-09-25 16:59
+     * @updateTime
+     */
     @ApiOperation("[0214] 文件重命名")
     @RequestMapping(value = "/fileRename/{filePath}/{position}", method = RequestMethod.POST)
     public Result fileRename(@PathVariable("filePath") String filePath, @PathVariable("position") String position) {
@@ -239,7 +240,7 @@ public class DataController {
             for (String s : stringList) {
                 StringBuilder sb             = new StringBuilder();
                 File          file           = new File(s);
-                String        fileParentPath = file.getParentFile() + File.separator;
+                String        fileParentPath = file.getParentFile() + Constants.SEPARATOR;
                 String        idCard         = file.getName().substring(Integer.parseInt(indexs[0]), Integer.parseInt(indexs[1]));
                 sb.append(fileParentPath);
                 sb.append(idCard);
@@ -258,9 +259,10 @@ public class DataController {
             return result;
         }
     }
+    //~-----------------------------照片、文件、日志处理 Controller END 20180914-------------------------------
 
 
-    //~--------------------------------采集数据处理-----------------------------
+    //~--------------------------------采集数据处理 Controller START 20180914-----------------------------
 
     /**
      * D:_test_1   E:_GAImg20180727
@@ -274,13 +276,12 @@ public class DataController {
      */
     @ApiOperation("[0214] 依据身份证查询人员数据详情 包括 姓名、身份证、区域、人员基础信息校验、是否存在卡管、是否存在采集库、是否有公安照片、是否有TSB照片、是否人员重复 生成Excel文件")
     @RequestMapping(value = "/infoFromtxt/{filePath}/{copyImg}/{updateDatabase}", method = RequestMethod.POST)
-
     public Result getInfoFromTxt(@ApiParam(name = "filePath", value = "文件路径", required = true) @PathVariable("filePath") String filePath,
                                  @ApiParam(name = "copyImg", value = "是否需要复制照片,包含TSB照片和公安数据库照片", required = true) @PathVariable("copyImg") String copyImg
     ) {
         Result result = new Result();
         if (ObjectUtils.isEmpty(filePath)) {
-            result.setStateCode(FAIL_CODE);
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
             result.setMsg("FilePath 不能为空");
             logger.error("FilePath 不能为空");
             return result;
@@ -305,12 +306,14 @@ public class DataController {
      * @updateTime
      */
     @ApiOperation("采集人员同步到卡管库,使用数据中心处理过的照片来进行同步")
-    @RequestMapping(value = "/synchro/{imgFilePath}/{logFilePath}/{threadCount}/{eValidateUserInfo}", method = RequestMethod.POST)
-    public Result synchro(@ApiParam(name = "imgFilePath", value = "照片文件夹路径", required = true) @PathVariable("imgFilePath") String imgFilePath,
-                          @ApiParam(name = "logFilePath", value = "日志文件夹路径", required = true) @PathVariable("logFilePath") String logFilePath,
+    @RequestMapping(value = "/synchro/{imgFilePath}/{txtFilePath}/{logFilePath}/{threadCount}/{eValidateUserInfo}/{copyImg}/{eIgnoreCollect}", method = RequestMethod.POST)
+    public Result synchro(@ApiParam(name = "imgFilePath", value = "照片文件夹路径", required = false) @PathVariable("imgFilePath") String imgFilePath,
+                          @ApiParam(name = "txtFilePath", value = "TXT文本文件", required = false) @PathVariable("txtFilePath") String txtFilePath,
                           @ApiParam(name = "eValidateUserInfo", value = "是否开启基本信息校验", required = true) @PathVariable("eValidateUserInfo") String eValidateUserInfo,
-                          @ApiParam(name = "threadCount", value = "线程数量", required = true) @PathVariable("threadCount") Integer threadCount
-    ) {
+                          @ApiParam(name = "copyImg", value = "是否需要复制照片", required = true) @PathVariable("copyImg") String copyImg,
+                          @ApiParam(name = "logFilePath", value = "日志文件夹路径", required = true) @PathVariable("logFilePath") String logFilePath,
+                          @ApiParam(name = "eIgnoreCollect", value = "是否跳过40采集库", required = true) @PathVariable("eIgnoreCollect") String eIgnoreCollect,
+                          @ApiParam(name = "threadCount", value = "线程数量", required = true) @PathVariable("threadCount") Integer threadCount) throws IOException {
         Result result = new Result();
         // 1、获取照片文件夹身份证ID,并分配线程
         if (ObjectUtils.isEmpty(imgFilePath)) {
@@ -331,31 +334,87 @@ public class DataController {
             logger.error("[0214 采集同步] 线程数量不能为空");
             return result;
         }
+        // TSB处理照片的文件夹路径
         imgFilePath = StringUtils.stringFormatPath(imgFilePath, null);
+        // 日志文件路径
         logFilePath = StringUtils.stringFormatPath(logFilePath, null);
-        boolean eValidate = Boolean.parseBoolean(eValidateUserInfo);
-        List<String> idCardList = MyFileUtils.getAllFileNameNoSuffix(imgFilePath);
+        // TXT文本路径
+        txtFilePath = StringUtils.stringFormatPath(txtFilePath, Constants.TXT_SUFFIX);
+        // 是否需要校验人员基本信息
+        boolean      eValidate = Boolean.parseBoolean(eValidateUserInfo);
+        // 是否需要复制照片(包含TSB数据中心处理过的照片、数据库照片)
+        boolean      eCopyImg  = Boolean.parseBoolean(copyImg);
+        // 是否跳过40采集库数据
+        boolean      ignoreCollect  = Boolean.parseBoolean(eIgnoreCollect);
+        List<String> idCardList;
+        String whereRoald = "";
+        if (eCopyImg) {
+            // 如果复制照片,则从照片文件夹里面获取IDCARD
+            idCardList = MyFileUtils.getAllFileNameNoSuffix(imgFilePath);
+            whereRoald = " [数据中心处理照片文件夹] ";
+        } else {
+            // 从TXT文件获取
+            idCardList = TxtUtil.readLine(txtFilePath, "UTF-8");
+            whereRoald = " [TXT文件]";
+        }
+        logger.info("[0214 采集同步] 本次同步人员数据从 {} 获取,总人数为: {}", whereRoald, idCardList.size());
+        // 分配线程
         List<List<String>> idCardThreadList = ListThreadUtil.dynamicListThread(idCardList, threadCount);
         for (List<String> stringList : idCardThreadList) {
             ThreadPoolUtil.getThreadPool().execute(
                     new DataSynchroRunnable(collectService, null, cardService, midService,
-                            stringList, imgFilePath, logFilePath, false,eValidate, true));
+                            stringList, imgFilePath, logFilePath, false, eValidate, true, eCopyImg, ignoreCollect));
         }
-
         result.setStateCode(Constants.SUCCESS_RESULT_CODE);
         result.setMsg("[0214 采集同步] 本次同步的人员数据共有:"
                 + idCardList.size() + "人,分为" + threadCount
                 + "个线程,每个线程处理数量为: "
-                + idCardThreadList.get(0).size() );
+                + idCardThreadList.get(0).size());
         return result;
     }
 
 
+    /**
+     * 采集库人员数据重复处理
+     *
+     * @param logFilePath
+     * @param threadCount
+     * @return
+     * @throws IOException
+     */
     @ApiOperation("[0214] 处理采集库人员数据重复 人员重复数据同步状态置为9: 表示可删除,卡管已同步置为1,未同步置为0")
     @RequestMapping(value = "/handleCollectDateRepeat/{logFilePath}/{threadCount}", method = RequestMethod.POST)
     public Result handleCollectDateRepeat(@ApiParam(name = "logFilePath", value = "日志文件夹路径") @PathVariable String logFilePath,
-                                          @ApiParam(name = "threadCount", value = "线程数量") @PathVariable Integer threadCount) {
+                                          @ApiParam(name = "threadCount", value = "线程数量") @PathVariable Integer threadCount) throws IOException {
+        Result result = new Result();
+        if (null == logFilePath) {
+            result.setStateCode(0);
+            result.setMsg("[0214 采集库人员重复处理] logFilePath 不能为空");
+            return result;
+        }
+        if (null == threadCount) {
+            result.setStateCode(0);
+            result.setMsg("[0214 采集库人员重复处理] threadCount 不能为空");
+            return result;
+        }
+        logFilePath = StringUtils.stringFormatPath(logFilePath, null);
         return dataHandleService.handleCollectDateRepeat(logFilePath, threadCount);
+    }
+
+
+    /**
+     * 更新卡管库、采集库单位编号、单位名称
+     *
+     * @param databaseName
+     * @return
+     */
+    @ApiOperation("[0214] 处理采集库、卡管库单位编号、单位名称,与东软数据库同步")
+    @RequestMapping(value = "/handleCollectDepartmentNo/{databaseName}/{logFilePath}/{threadCount}", method = RequestMethod.POST)
+    public Result handleCollectDepartmentNo(@ApiParam(name = "databaseName", value = "数据库名称") @PathVariable String databaseName,
+                                            @ApiParam(name = "logFilePath", value = "日志文件夹路径") @PathVariable String logFilePath,
+                                            @ApiParam(name = "threadCount", value = "线程数") @PathVariable Integer threadCount) {
+        logFilePath = StringUtils.stringFormatPath(logFilePath, null);
+        return dataHandleService.handleCollectDepartmentNo(databaseName, logFilePath, threadCount);
     }
 
 
@@ -388,6 +447,14 @@ public class DataController {
         result.setData(resultMsg);
         return result;
     }
+
+    @ApiOperation("[0214 AC01已存在人员重新生成申领表 临时")
+    @RequestMapping(value = "/generateBusApply", method = RequestMethod.POST)
+    public Result generateBusApply() {
+        // dataHandleService.handle
+        return null;
+    }
+    //~--------------------------------采集数据处理 Controller END 20180914-----------------------------
 
 
 }

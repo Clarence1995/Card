@@ -5,7 +5,9 @@ import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.po.BasicPersonInfoPO;
 import com.tecsun.card.common.clarencezeroutils.ListThreadUtil;
+import com.tecsun.card.entity.vo.UserInfoVO;
 import io.jsonwebtoken.lang.Assert;
+import lombok.ToString;
 import org.junit.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
@@ -19,10 +21,90 @@ import java.util.*;
 
 public class ArrayTest {
     @Test
+    public void testStringUtil() {
+        System.out.println((File.separator + "\\aab\\aab").startsWith("\\"));
+        System.out.println(File.separator);
+    }
+    @Test
+    public void testListSort() {
+        List<UserInfoVO> resultList = new ArrayList();
+        UserInfoVO infoVO1 = new UserInfoVO();
+        infoVO1.setName("A");
+        infoVO1.setIdCard("511621199501157759");
+        infoVO1.setTsbImgHas(true);
+        infoVO1.setDatabaseImgHas(true);
+        infoVO1.setUserInfoValid(true);
+        infoVO1.setCollectHas(false);
+        infoVO1.setCardHas(true);
+        UserInfoVO infoVO2 = new UserInfoVO();
+        infoVO2.setName("AB");
+        infoVO2.setIdCard("511621199501157759");
+        infoVO2.setTsbImgHas(true);
+        infoVO2.setDatabaseImgHas(true);
+        infoVO2.setUserInfoValid(true);
+        infoVO2.setCollectHas(true);
+        infoVO2.setCardHas(true);
+
+        resultList.add(infoVO1);
+        resultList.add(infoVO2);
+        Collections.sort(resultList, new Comparator<UserInfoVO>() {
+            @Override
+            public int compare(UserInfoVO o1, UserInfoVO o2) {
+                // 基础信息是否合格
+                if (!o1.getUserInfoValid().equals(o2.getUserInfoValid())) {
+                    return o1.getUserInfoValid().compareTo(o2.getUserInfoValid());
+                }
+                // 是否存在采集库
+                if (!o1.getCollectHas().equals(o2.getCollectHas())) {
+                    return o1.getCollectHas().compareTo(o1.getCollectHas());
+                }
+                // 是否存在TSB照片
+                if (!o1.getTsbImgHas().equals(o2.getTsbImgHas())) {
+                    return o1.getTsbImgHas().compareTo(o2.getTsbImgHas());
+                }
+                // 是否存在公安照片
+                if (!o1.getDatabaseImgHas().equals(o2.getDatabaseImgHas())) {
+                    return o1.getDatabaseImgHas().compareTo(o2.getDatabaseImgHas());
+                }
+                // 是否存在卡管卡库
+                if (!o1.getCardHas().equals(o2.getCardHas())) {
+                    return o1.getCardHas().compareTo(o2.getCardHas());
+                }
+
+                return o1.getName().compareTo(o2.getName());
+            }
+        });
+
+        System.out.println(resultList);
+    }
+    @Test
+    public void testDateFormat() {
+
+        String time = DateUtils.dateFormat("20180917", "yyyy/MM/dd");
+        System.out.println(time );
+    }
+
+    @Test
+    public void test() {
+        String time = DateUtils.newDateFormat1("2010/10/10", "yyyy/MM/dd");
+        System.out.println(time);
+        System.out.println(3600L * 24L * 365L * 6L * 1000L);
+    }
+
+
+    @Test
+    public void testClassPathResource() {
+        // 1、资源加载
+        ClassPathResource res = new ClassPathResource("config/beans.xml");
+
+        System.out.println(res.exists());
+    }
+
+    @Test
     public void testBeanFactory() throws IOException {
-        ClassPathResource res = new ClassPathResource("config/spring.xml");
+        ClassPathResource          res     = new ClassPathResource("config/spring.xml");
         DefaultListableBeanFactory factory = new DefaultListableBeanFactory();
-        XmlBeanDefinitionReader reader = new XmlBeanDefinitionReader(factory);
+        XmlBeanDefinitionReader    reader  = new XmlBeanDefinitionReader(factory);
         reader.loadBeanDefinitions(res);
         System.out.println(res.getFilename());
         System.out.println(res.getFile().getAbsolutePath());
@@ -35,11 +117,12 @@ public class ArrayTest {
         System.out.println(resource.getFilename());
 
     }
+
     @Test
     public void fileRename() {
-        String s1 = "E:\\imgtest\\511621199501157759_dfafdsafsdaafdsaf.jpg";
-        File file = new File(s1);
-        String idCard = file.getName().substring(0, 18);
+        String s1             = "E:\\imgtest\\511621199501157759_dfafdsafsdaafdsaf.jpg";
+        File   file           = new File(s1);
+        String idCard         = file.getName().substring(0, 18);
         String parentFilePath = file.getParentFile() + File.separator;
         file.renameTo(new File(parentFilePath + idCard + ".jpg"));
         System.out.println("name: " + file.getName().substring(0, 18));
@@ -48,10 +131,10 @@ public class ArrayTest {
 
     @Test
     public void testGetNum() {
-        String result = "";
-        long   userNo = 0;
-        String ran    = "";
-        StringBuilder sb = new StringBuilder(28);
+        String        result = "";
+        long          userNo = 0;
+        String        ran    = "";
+        StringBuilder sb     = new StringBuilder(28);
 //        String userNoStr = redisService.get("sisp:cardmanagement:user_serial");
         String userNoStr = "404";
 
@@ -63,7 +146,7 @@ public class ArrayTest {
 //            redisService.set(Constants.USER_SERIAL, String.valueOf(Long.parseLong(userNoStr) + 1));
 //        }
         userNo = Long.parseLong(userNoStr);
-        String times  = String.valueOf(System.currentTimeMillis());
+        String times = String.valueOf(System.currentTimeMillis());
         sb.append(times);
         Random random = new Random();
         for (int i = 0; i < 6; i++) {
@@ -84,10 +167,12 @@ public class ArrayTest {
         String s1 = "D:\\hey\\test.txt";
         System.out.println(s1.substring(0, s1.lastIndexOf("\\")));
     }
+
     @Test
     public void getToday() {
         System.out.println(DateUtils.todayDate1());
     }
+
     @Test
     public void testTxtUtilFormat() throws IOException {
 //        String srcFile = "C:\\Users\\0214\\Downloads\\20180907拉萨单位未制卡数据情况\\error.txt";
@@ -98,7 +183,7 @@ public class ArrayTest {
 
     @Test
     public void testTextFormat() throws IOException {
-        String srcFile = "C:\\Users\\0214\\Downloads\\20180907拉萨单位未制卡数据情况\\error.txt";
+        String       srcFile    = "C:\\Users\\0214\\Downloads\\20180907拉萨单位未制卡数据情况\\error.txt";
         List<String> stringList = TxtUtil.readLine(srcFile, "UTF-8");
         System.out.println(stringList.size());
         Collections.sort(stringList, new Comparator<String>() {
@@ -119,6 +204,7 @@ public class ArrayTest {
             System.out.println(s);
         }
     }
+
     @Test
     public void ValidateTest() {
         BasicPersonInfoPO bean = new BasicPersonInfoPO();
@@ -138,19 +224,20 @@ public class ArrayTest {
 
     @Test
     public void lombok2Test() {
-        User user = new User();
-        user.setPassword("hello");
-        user.setUsername("clarencezero");
-        System.out.println(user.getPassword());
-        System.out.println(user.getUsername());
+        // User user = new User();
+        // user.setPassword("hello");
+        // user.setUsername("clarencezero");
+        // System.out.println(user.getPassword());
+        // System.out.println(user.getUsername());
     }
 
     @Test
     public void testValidate() {
-        String mobile = "18189913965";
+        String  mobile = "18189913965";
         boolean result = ValidateUtil.isMobile(mobile);
         System.out.println(result);
     }
+
     @Test
     public void lombokTest() {
         BasicPersonInfoPO bean = new BasicPersonInfoPO();
@@ -167,12 +254,12 @@ public class ArrayTest {
             testList.add(i, "i" + i);
         }
 
-        List<List<String>> result  = ListThreadUtil.dynamicListThread(testList);
-        int sum = 0;
+        List<List<String>> result = ListThreadUtil.dynamicListThread(testList);
+        int                sum    = 0;
         for (List list : result) {
             System.out.println(list.size());
             System.out.println(list.get(0));
-            sum+= list.size();
+            sum += list.size();
         }
         System.out.println("[总和]: " + sum);
         // System.out.println(testList.size());

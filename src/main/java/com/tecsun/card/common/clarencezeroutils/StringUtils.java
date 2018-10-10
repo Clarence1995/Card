@@ -1,5 +1,8 @@
 package com.tecsun.card.common.clarencezeroutils;
 
+import com.tecsun.card.entity.Constants;
+import org.apache.commons.lang3.RandomStringUtils;
+
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 
@@ -18,6 +21,14 @@ public class StringUtils {
     private String lpad(int length, int number) {
         String f = "%0" + length + "d";
         return String.format(f, 0);
+    }
+
+    public static String generateAbsoluteFileName(String filePath, String rootName, String fileSuffix) {
+        StringBuilder sb = new StringBuilder(filePath);
+        sb.append(Constants.SEPARATOR);
+        sb.append(rootName + DateUtils.getNowYMDHM() + RandomStringUtils.random(3, false, true));
+        sb.append(fileSuffix);
+        return sb.toString();
     }
 
     /**

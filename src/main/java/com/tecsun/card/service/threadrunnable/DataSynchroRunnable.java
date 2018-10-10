@@ -57,7 +57,6 @@ public class DataSynchroRunnable implements Runnable {
      */
     private              List<String>      idCardList;
 
-
     /**
      * 日志路径
      */
@@ -68,13 +67,21 @@ public class DataSynchroRunnable implements Runnable {
      * 是否需要从数据库获取照片,如果不需要复制照片,则需要传入照片路径
      */
     private boolean getImgFromDatabase;
+    /**
+     * 是否需要复制照片
+     */
+    private boolean ecopyImg;
 
     /**
      * 是否需要判断基础人员信息
      */
     private boolean eValidateUserInfo;
 
-    private final String LOG_NAME = "人员同步日志记录";
+    /**
+     * 是否跳过40采集库数据
+     */
+    private       boolean ignoreCollect;
+    private final String  LOG_NAME = "人员同步日志记录";
 
     private boolean getImgFromFile;
 
@@ -93,6 +100,7 @@ public class DataSynchroRunnable implements Runnable {
      * @param logRootPath        日志文件夹
      * @param getImgFromDatabase 是否从数据库获取
      * @param eValidateUserInfo  是否需要判断人员基础信息
+     * @param ignoreCollect
      */
     public DataSynchroRunnable(CollectService collectService,
                                CollectTwoService collectTwoService,
@@ -103,7 +111,9 @@ public class DataSynchroRunnable implements Runnable {
                                String logRootPath,
                                boolean getImgFromDatabase,
                                boolean eValidateUserInfo,
-                               boolean getImgFromFile) {
+                               boolean getImgFromFile,
+                               boolean ecopyImg,
+                               boolean ignoreCollect) {
         this.collectService = collectService;
         this.collectTwoService = collectTwoService;
         this.cardService = cardService;
@@ -114,6 +124,8 @@ public class DataSynchroRunnable implements Runnable {
         this.getImgFromDatabase = getImgFromDatabase;
         this.eValidateUserInfo = eValidateUserInfo;
         this.getImgFromFile = getImgFromFile;
+        this.ecopyImg = ecopyImg;
+        this.ignoreCollect = ignoreCollect;
     }
 
 
@@ -169,13 +181,21 @@ public class DataSynchroRunnable implements Runnable {
 
             // 3、采集
             // 获取采集人员详情
-            BasicPersonInfoPO basicPersonInfoPO = collectService.getBasicInfoByIDCard(idCard, null);
-            if (null == basicPersonInfoPO) {
-                // 采集库不存在此人
-                logger.info("[0214 采集同步] 人员ID: {} 不存在采集库", idCard);
-                failSb.append("_采集库不存在");
-                errorList.add(failSb.toString());
-                continue;
+            BasicPersonInfoPO basicPersonInfoPO = null;
+            if (!ignoreCollect) {
+                basicPersonInfoPO = collectService.getBasicInfoByIDCard(idCard, null);
+            } else {
+                basicPersonInfoPO = collectService.getSingleBasicPersonByIdcardFromMidTwenty(idCard, null);
+            }
+            if (null == basicPersonInfoPO && !ignoreCollect) {
+                basicPersonInfoPO = collectService.getSingleBasicPersonByIdcardFromMidTwenty(idCard, null);
+                if (null == basicPersonInfoPO) {
+                    // 采集库不存在此人
+                    logger.info("[0214 采集同步] 人员ID: {} 不存在采集库和中间库20", idCard);
+                    failSb.append("_采集库&中间库20不存在");
+                    errorList.add(failSb.toString());
+                    continue;
+                }
             }
             // 2、人员信息校验
             Ac01PO ac01PO = new Ac01PO();
@@ -219,57 +239,59 @@ public class DataSynchroRunnable implements Runnable {
             // 数据库字段所需要的路径
             String databaseImgPath = File.separator + codeForImg + File.separator + idCard + ".jpg";
             basicPersonInfoPO.setPhotoUrl(databaseImgPath);
-            if (getImgFromDatabase) {
-                // 是否从数据库中获取照片
-                // 照片[中间库10.24.250.20]
-                MidImgDAO midImgDAO = midService.getImgFromGONGAN(idCard);
-                if (null == midImgDAO && midImgDAO.getXp().length == 0) {
-                    // ②如果为空,则查询表 COLLECT_PHOTO
-                    midImgDAO = midService.getImgFromGAT12(idCard);
+            if (ecopyImg) {
+                if (getImgFromDatabase) {
+                    // 是否从数据库中获取照片
+                    // 照片[中间库10.24.250.20]
+                    MidImgDAO midImgDAO = midService.getImgFromGONGAN(idCard);
                     if (null == midImgDAO && midImgDAO.getXp().length == 0) {
-                        // ③如果为空,则查询表 GAT12
-                        midImgDAO = midService.getImgFromCOLLECTPHOTO(idCard);
+                        // ②如果为空,则查询表 COLLECT_PHOTO
+                        midImgDAO = midService.getImgFromGAT12(idCard);
                         if (null == midImgDAO && midImgDAO.getXp().length == 0) {
-                            logger.info("[0214 采集同步] 人员:" + idCard + "数据库不存在此人公安照片");
-                            // 是否需要记录状态
-                            updateCollectStatusBean.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
-                            updateCollectStatusBean.setDealStaus(Constants.COLLECT_IMG_ERROR);
-                            updateCollectStatusBean.setDealMsg("不存在公安照片");
-                            failSb.append("_数据库不存在公安照片");
-                            errorList.add(failSb.toString());
-                            collectService.updateUserInfoStatusByIdCardAndName(updateCollectStatusBean);
-                            continue;
+                            // ③如果为空,则查询表 GAT12
+                            midImgDAO = midService.getImgFromCOLLECTPHOTO(idCard);
+                            if (null == midImgDAO && midImgDAO.getXp().length == 0) {
+                                logger.info("[0214 采集同步] 人员:" + idCard + "数据库不存在此人公安照片");
+                                // 是否需要记录状态
+                                updateCollectStatusBean.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
+                                updateCollectStatusBean.setDealStaus(Constants.COLLECT_IMG_ERROR);
+                                updateCollectStatusBean.setDealMsg("不存在公安照片");
+                                failSb.append("_数据库不存在公安照片");
+                                errorList.add(failSb.toString());
+                                collectService.updateUserInfoStatusByIdCardAndName(updateCollectStatusBean);
+                                continue;
+                            }
                         }
                     }
-                }
-                // 写入指定文件夹
-                byte[] bytes = midImgDAO.getXp();
-                try {
-                    FileUtils.writeByteArrayToFile(new File(imgFilePath.toString()), bytes);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            // 从文件夹获取人员照片
-            if (getImgFromFile) {
-                if (ObjectUtils.isEmpty(imgPath)) {
-                    throw new NullPointerException("[0214 采集同步] imgpath 不能为空");
-                }
-                // String srcImgPath = imgPath + Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX;
-                String disImgPath = imgFilePath.toString();
-                if (!new File(tsbImgPath.toString()).exists()) {
-                    logger.error("[0214 采集同步] 人员: {}, 照片路径不存在: {}", idCard, disImgPath);
-                    failSb.append("_图片路径不存在");
-                    continue;
-                } else {
+                    // 写入指定文件夹
+                    byte[] bytes = midImgDAO.getXp();
                     try {
-                        FileUtils.copyFile(new File(tsbImgPath.toString()), new File(disImgPath));
+                        FileUtils.writeByteArrayToFile(new File(imgFilePath.toString()), bytes);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    logger.info("[0214 采集同步] 人员: {} 照片 (源于指定文件夹)复制成功, 目标路径为: {} ", idCard, disImgPath);
                 }
+                // 从文件夹获取人员照片
+                if (getImgFromFile) {
+                    if (ObjectUtils.isEmpty(imgPath)) {
+                        throw new NullPointerException("[0214 采集同步] imgpath 不能为空");
+                    }
+                    // String srcImgPath = imgPath + Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX;
+                    String disImgPath = imgFilePath.toString();
+                    if (!new File(tsbImgPath.toString()).exists()) {
+                        logger.error("[0214 采集同步] 人员: {}, 照片路径不存在: {}", idCard, disImgPath);
+                        failSb.append("_图片路径不存在");
+                        continue;
+                    } else {
+                        try {
+                            FileUtils.copyFile(new File(tsbImgPath.toString()), new File(disImgPath));
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        logger.info("[0214 采集同步] 人员: {} 照片 (源于指定文件夹)复制成功, 目标路径为: {} ", idCard, disImgPath);
+                    }
 
+                }
             }
             // 4、藏文
             String zangName = collectService.getZangNameByIdCard(idCard);
@@ -314,8 +336,9 @@ public class DataSynchroRunnable implements Runnable {
             logFilePath.replace(logFilePath.toString().lastIndexOf("\\") + 1,
                     logFilePath.toString().length(), LOG_NAME + DateUtils.getNowYMDHM() + FAIL_LOG_NAME + Constants.TXT_SUFFIX);
             TxtUtil.writeTxt(new File(logFilePath.toString()), "UTF-8", errorList);
+            logger.info("[0214 采集同步 完成] ~----------当前线程: {}, 处理总人数: {}, 成功人数: {}, 失败人数: {}-----------------------", Thread.currentThread().getName(), totalNum, successList.size(), errorList.size());
         } catch (IOException e) {
-            logger.error("[0214 采集同步] 文件复制出错：{}" ,e);
+            logger.error("[0214 采集同步] 文件复制出错：{}", e);
         }
     }
 }

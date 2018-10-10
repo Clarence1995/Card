@@ -77,6 +77,28 @@ public interface CardService {
      */
     List<VisualDataDoughunDAO> getVDCollectAC01();
 
+    /**
+     * @return java.util.List<com.tecsun.card.entity.beandao.card.Ac01DAO>
+     * @Description 获取卡管库所有人员ID和姓名
+     * @param:
+     * @author 0214
+     * @createTime 2018-09-25 10:44
+     * @updateTime
+     */
+    List<Ac01DAO> listAllUserIdCard();
+
+
+    /**
+     * @return com.tecsun.card.entity.po.Ac01PO
+     * @Description 通过区域ID、人员状态获取人员详情
+     * @param: regionalCode
+     * @param: userStatus
+     * @author 0214
+     * @createTime 2018-09-26 16:02
+     * @updateTime
+     */
+    List<Ac01PO> getAC01DetailByRegeionalCodeAndStatus(String regionalCode, String userStatus);
+
 
     // ~ UPDATE ---------------------------------------------
 
@@ -121,21 +143,20 @@ public interface CardService {
     // ~ ELSE
 
     /**
-     * @Description  组装AC01
+     * @return void
+     * @Description 组装AC01
      * @param: ac01PO
-    * @param: bean
-     * @return  void
-     * @author  0214
+     * @param: bean
+     * @author 0214
      * @createTime 2018-09-20 13:07
      * @updateTime
      */
     void assembleAC01(Ac01PO ac01PO, BasicPersonInfoPO bean) throws Exception;
 
 
-
     int updateAC01Status(Ac01DAO acstatusBean);
 
 
-
     Result synchroFromExcel(SynchroExcelVO synchroExcelVO) throws Exception;
+
 }

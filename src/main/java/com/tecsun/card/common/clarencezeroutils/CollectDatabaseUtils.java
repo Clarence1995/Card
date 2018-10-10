@@ -88,9 +88,8 @@ public class CollectDatabaseUtils {
             validateResult = false;
             dealMsg.append(" 手机号为空");
         }
-        if (StringUtils.isBlank(basicBean.getBirthday())) {
-            basicBean.setBirthday(basicBean.getCertNum().substring(6, 14));
-        }
+
+        basicBean.setBirthday(basicBean.getCertNum().substring(6, 14));
 
         // 2、判断是否为婴儿卡(以当前时间判断)
         boolean eBabyCard = checkBabyCard(basicBean.getBirthday());

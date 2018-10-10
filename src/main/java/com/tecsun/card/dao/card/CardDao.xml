@@ -43,10 +43,10 @@
         FROM (SELECT * FROM AC01
         <where>
             <if test="idCard != null and idCard != ''">
-                CERT_NUM = #{idCard}
+                AAC147 = #{idCard}
             </if>
             <if test="name != null and name != ''">
-                AND NAME = #{name}
+                AND AAC003 = #{name}
             </if>
         </where>
         ORDER BY ID DESC
@@ -118,6 +118,10 @@
     </select>
 
 
+    <!-- 获取卡管库所有人员ID和姓名 -->
+    <select id="listAllUserIdCardAndName" resultType="com.tecsun.card.entity.beandao.card.Ac01DAO">
+      SELECT AAC147, AAC003 FROM AC01
+    </select>
 
     <!--~ UPDATE ==============================-->
     <update id="updateAC01Status" parameterType="com.tecsun.card.entity.beandao.card.Ac01DAO">
@@ -131,6 +135,12 @@
             </if>
             <if test="applyType != null and applyType != ''">
                 apply_Type = #{applyType},
+            </if>
+            <if test="AAB001 != null and AAB001 != ''">
+                AAB001 = #{AAB001},
+            </if>
+            <if test="AAB004 != null and AAB004 != ''">
+                AAB004 = #{AAB004},
             </if>
         </set>
         WHERE AAC147 = #{AAC147}
@@ -203,12 +213,19 @@
         INSERT INTO SYS_LOG (id,bus_type,person_id,content,create_time,update_date)
         values (sys_log_seq_id.nextval,#{bussinessType},#{userId},#{content},sysdate,sysdate)
     </insert>
+    <select id="getAC01DetailByRegeionalCodeAndStatus" resultType="com.tecsun.card.entity.po.Ac01PO">
+        SELECT *
+        FROM AC01
+        <where>
+            <if test="regionalCode != null">
+                AAC301B = #{regionalCode}
+            </if>
 
-
-
-
-
-
+            <if test="userStatus != null">
+                STATUS = #{userStatus}
+            </if>
+        </where>
+    </select>
 
 
 </mapper>

@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.tecsun.card.dao.dongruan.DongRuanDao">
+
+
+    <select id="getDongRuanUserInfoByIdAndName"
+            resultType="com.tecsun.card.entity.beandao.dongruan.DongRuanUserInfoDAO">
+        SELECT a.AAC002, a.AAC003, b.AAB001, c.AAB004
+        FROM xzsb.AC01 a
+        LEFT JOIN xzsb.AC02 b ON a.AAC001 = b.AAC001
+        LEFT JOIN xzsb.AB01 c ON b.AAB001 = c.AAB001
+        <where>
+            <if test="userName != null and userName != ''">
+                a.AAC003 = #{userName}
+            </if>
+            <if test="idCard != null and idCard != ''" >
+                AND a.AAC002 = #{idCard}
+            </if>
+            AND ROWNUM = 1
+        </where>
+
+    </select>
+</mapper>

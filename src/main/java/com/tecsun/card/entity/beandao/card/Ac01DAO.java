@@ -33,6 +33,10 @@ public class Ac01DAO extends BasicInfoBean {
      */
     private String AAC147;
     /**
+     * 姓名
+     */
+    private String AAC003;
+    /**
      * 银行账号
      */
     private String AAE053;
@@ -41,5 +45,17 @@ public class Ac01DAO extends BasicInfoBean {
      */
     private String AAC301;
 
+    /**
+     * 社会保障卡卡号 9位
+     */
     private String AAZ500;
+
+    /**
+     * 单位编号
+     */
+    private String AAB001;
+    /**
+     * 单位名称
+     */
+    private String AAB004;
 }

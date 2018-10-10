@@ -22,7 +22,7 @@ public class Constants {
     // 采集同步标志
     public static final String COLLECT_HAD_SYNCHRO = "1";
     public static final String COLLECT_NO_SYNCHRO  = "0";
-    public static final String COLLECT_USER_REPEAT= "9";
+    public static final String COLLECT_USER_REPEAT = "9";
 
     //  ---------- 采集人员状态标志 START ------------
     // 未处理
@@ -267,6 +267,15 @@ public class Constants {
 
     // 人员序列 REIDS 的 KEY
     public static final String REDIS_USER_SERIAL_KEY = "sisp:cardmanagement:user_serial";
+
+    // ----------- 是否已完成东软单位信息同步 START-----------
+    // 未同步
+    public static final int DONGRUAN_SYNCHRO_NO             = 0;
+    // 已同步
+    public static final int DONGRUAN_SYNCHRO_YES            = 1;
+    // 此人在东软视图中不存在信息
+    public static final int DONGRUAN_SYNCHRO_NO_INFORMATION = 2;
+    // ----------- 是否已完成东软单位信息同步 END-----------
 
     // ~ HashMap --------------------------------------------------------
     // 区域信息编码(用于判断是否是区外异地
