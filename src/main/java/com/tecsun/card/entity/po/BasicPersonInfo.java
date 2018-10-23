@@ -8,7 +8,7 @@ import lombok.ToString;
 @Setter
 @Getter
 @ToString
-public class BasicPersonInfoPO {
+public class BasicPersonInfo {
     private Long id;
     /**
      * 户籍所在地

@@ -8,7 +8,7 @@ import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
@@ -54,7 +54,10 @@ public class CollectServiceImpl implements CollectService {
      * @updateTime
      */
     @Override
-    public BasicPersonInfoPO getBasicInfoByIDCard(String idCard, String name) {
+    public BasicPersonInfo getBasicInfoByIDCard(String idCard, String name) throws Exception {
+        if (null == idCard) {
+            throw new NullPointerException("[0214] 获取40采集库人员数据出错,入参身份证号码不能为空");
+        }
         return collectDao.getSingleBasicPersonByIdcard(idCard, name);
     }
 
@@ -75,7 +78,7 @@ public class CollectServiceImpl implements CollectService {
     /**
      * @param idCard
      * @param name
-     * @return java.util.List<com.tecsun.card.entity.po.BasicPersonInfoPO>
+     * @return java.util.List<com.tecsun.card.entity.po.BasicPersonInfo>
      * @Description 获取人员信息详情(包含重复数据)
      * @param:
      * @author 0214
@@ -83,7 +86,7 @@ public class CollectServiceImpl implements CollectService {
      * @updateTime
      */
     @Override
-    public List<BasicPersonInfoPO> getUserInfoWithRepeat(String idCard, String name) {
+    public List<BasicPersonInfo> getUserInfoWithRepeat(String idCard, String name) {
         return collectDao.getUserInfoWithRepeat(idCard, name);
     }
 
@@ -102,7 +105,10 @@ public class CollectServiceImpl implements CollectService {
     }
 
     @Override
-    public BasicPersonInfoPO getSingleBasicPersonByIdcardFromMidTwenty(String idCard, String name) {
+    public BasicPersonInfo getSingleBasicPersonByIdcardFromMidTwenty(String idCard, String name) throws Exception {
+        if (null == idCard) {
+            throw new NullPointerException("[0214] 获取20中间库人员采集信息出错,idCard不能为空");
+        }
         return midTwenty.getSingleBasicPersonByIdcardFromMidTwenty(idCard, name);
     }
     // ~ UPDATE
@@ -114,9 +120,15 @@ public class CollectServiceImpl implements CollectService {
      * @return
      */
     @Override
-    public int updateUserInfoStatusByIdCardAndName(CollectVO basicDao) {
+    public int updateUserInfoStatusByIdCardAndName(CollectVO basicDao) throws Exception {
         // 组装DAO层类
         BasicPersonInfoDAO basicBeanDao = new BasicPersonInfoDAO();
+        if (null == basicBeanDao) {
+            throw new  NullPointerException("[0214] 采集库人员信息更新出错, 入参不能为空");
+        }
+        if (null == basicDao.getCertNum()) {
+            throw new NullPointerException("[0214] 采集库人员信息更新出错, 入参 身份证号码为空,不允许更新操作");
+        }
         basicBeanDao.setCertNum(basicDao.getCertNum());
         basicBeanDao.setName(basicDao.getName());
         basicBeanDao.setDealStatus(basicDao.getDealStaus());
@@ -158,14 +170,14 @@ public class CollectServiceImpl implements CollectService {
 
 
     @Override
-    public List<BasicPersonInfoPO> listAllBasicPersonInfoPO() {
+    public List<BasicPersonInfo> listAllBasicPersonInfoPO() {
         return collectDao.lisetBasicPersonInfo();
     }
 
 
     @Override
     @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
-    public List<BasicPersonInfoPO> listQualifiedBasicPerson(CollectVO collectVO) {
+    public List<BasicPersonInfo> listQualifiedBasicPerson(CollectVO collectVO) {
         BasicPersonInfoDAO basicBeanDao = new BasicPersonInfoDAO();
         basicBeanDao.setCertNum(collectVO.getCertNum());
         basicBeanDao.setSynchroStatus(collectVO.getSynchroStatus());
@@ -188,7 +200,7 @@ public class CollectServiceImpl implements CollectService {
      * @updateTime
      */
     @Override
-    public boolean validateuserInfo(BasicPersonInfoPO basicBean) {
+    public boolean validateuserInfo(BasicPersonInfo basicBean) {
         boolean       validateResult = true;
         StringBuilder dealMsg        = new StringBuilder();
         dealMsg.append("基本信息缺失如下: ");
@@ -269,7 +281,7 @@ public class CollectServiceImpl implements CollectService {
     }
 
     @Override
-    public List<BasicPersonInfoPO> getBasicInfoFromList(List<String> idCardList) {
+    public List<BasicPersonInfo> getBasicInfoFromList(List<String> idCardList) {
         return collectDao.listBasicBeanByIdList(idCardList);
     }
 

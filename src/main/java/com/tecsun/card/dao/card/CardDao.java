@@ -78,6 +78,13 @@ public interface CardDao {
      */
     List<Ac01PO> getAC01DetailByRegeionalCodeAndStatus(@Param("regionalCode")String regionalCode, @Param("userStatus")String userStatus);
 
+    /**
+     * 获取所有AC01表中的人员数据
+     *
+     * @return
+     */
+    List<Ac01PO> listAllAC01();
+
     // ~ UPDATE  ---------------------------------------------
 
     /**
@@ -93,11 +100,14 @@ public interface CardDao {
     // ~ DELETE  ---------------------------------------------
 
     /**
-     * 获取所有AC01表中的人员数据
-     *
+     * 根据身份证、姓名删除AC01表中的人员数据
+     * @param idCard
+     * @param userName
      * @return
      */
-    List<Ac01PO> listAllAC01();
+    int deleteAC01ByIdCardAndName(@Param("idCard")String idCard, @Param("userName")String userName);
+
+
 
 
     // ~ INSERT  ---------------------------------------------

@@ -1,9 +1,8 @@
 package com.tecsun.card.common.clarencezeroutils;
 
 import com.tecsun.card.entity.Constants;
-import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.po.Ac01PO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,7 +31,7 @@ public class CollectDatabaseUtils {
      * @createTime 2018-09-20 09:51
      * @updateTime
      */
-    public static boolean checkCollectUserInfo(BasicPersonInfoPO basicBean) {
+    public static boolean checkCollectUserInfo(BasicPersonInfo basicBean) {
         boolean       validateResult = true;
         StringBuilder dealMsg        = new StringBuilder();
         dealMsg.append("基本信息缺失:");
@@ -167,4 +166,5 @@ public class CollectDatabaseUtils {
             return false;
         }
     }
+
 }

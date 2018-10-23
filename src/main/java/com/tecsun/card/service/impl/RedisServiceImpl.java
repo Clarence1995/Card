@@ -41,7 +41,7 @@ public class RedisServiceImpl implements RedisService {
     public Long hset (String hkey, String field, String value) {
         // return jedisPool.getResource().hset(hkey, field, value);
         Jedis resource = jedisPool.getResource();
-        Long result = resource.hset(hkey, field, value);;
+        Long result = resource.hset(hkey, field, value);
         jedisPool.returnResource(resource);
         return result;
     }

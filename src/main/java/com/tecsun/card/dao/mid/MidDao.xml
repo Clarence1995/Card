@@ -20,7 +20,7 @@
          ORDER BY status
     </select>
 
-    <select id="getBasicPersonByIdCardInMid" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+    <select id="getBasicPersonByIdCardInMid" resultType="com.tecsun.card.entity.po.BasicPersonInfo">
         SELECT address,addressCode,
         birthday,
         certType, cert_num as certNum,cert_validity AS certValidity,

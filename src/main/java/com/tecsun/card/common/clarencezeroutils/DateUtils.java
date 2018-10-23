@@ -13,9 +13,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.validation.constraints.NotNull;
-import javax.xml.crypto.Data;
-
 /**
  * @author haixia.shi
  * @description 日期操作工具类
@@ -27,9 +24,11 @@ public class DateUtils {
 
     // 设置基础时间格式
     public static SimpleDateFormat dateFormat    = new SimpleDateFormat("yyyy-MM-dd");
+    public static SimpleDateFormat YYYYMMDD = new SimpleDateFormat("yyyyMMdd");
     public static SimpleDateFormat dateFormat2   = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
     public static SimpleDateFormat YMDHM         = new SimpleDateFormat("yyyyMMddHHmm");
     public static SimpleDateFormat YMDHMS        = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static SimpleDateFormat YMDHMS_WITH_CHN        = new SimpleDateFormat("yyyy年 MM月 dd日 HH时 mm分 ss秒");
     public static SimpleDateFormat dateFormatYMD = new SimpleDateFormat("yyyy/MM/dd");
 
     // 常用的格式
@@ -42,10 +41,17 @@ public class DateUtils {
     public static final String ymd_H_M_S   = "yyyy/MM/dd HH:mm:ss";
 
     public static void main(String[] args) {
-        System.out.println(getNowYMDHMS());
+        System.out.println(getYYYYMMDDFormatDateStr());
+        // System.out.println(getNowYMDHMS());
         // String s1   = "20180917";
         // Date   date = DateUtils.getDateByString(s1, YMD);
         // System.out.println(date.getTime());
+    }
+
+
+    public static String getYYYYMMDDFormatDateStr() {
+        Date now = new Date();
+        return YYYYMMDD.format(now);
     }
 
     /**
@@ -64,6 +70,10 @@ public class DateUtils {
     public static String getNowYMDHMS() {
         Date now = new Date();
         return YMDHMS.format(now);
+    }
+    public static String getNowYMDHMSWithCHN() {
+        Date now = new Date();
+        return YMDHMS_WITH_CHN.format(now);
     }
 
     /**
@@ -906,7 +916,6 @@ public class DateUtils {
     /**
      * 判断传入的两个日期的大小(仅限不相等的两个日期比较)
      *
-     * @param selectDate 查询时间
      * @return 是返回true，不是返回false
      */
     public static boolean dateCompare(String startDate, String endDate) {
@@ -927,7 +936,6 @@ public class DateUtils {
     /**
      * 判断传入的两个日期是否相等
      *
-     * @param selectDate 查询时间
      * @return 是返回true，不是返回false
      */
     public static boolean dateEquals(String startDate, String endDate) {

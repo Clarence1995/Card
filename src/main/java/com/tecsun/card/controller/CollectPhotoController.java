@@ -1,7 +1,7 @@
 package com.tecsun.card.controller;
 
 import com.tecsun.card.entity.Result;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
@@ -40,7 +40,7 @@ public class CollectPhotoController {
      */
     @RequestMapping(value = "TSBPhotoManage", method = RequestMethod.POST)
     @ResponseBody
-    public Result TSBPxmlbeanshotoManage(@RequestBody CollectVO collectVO) {
+    public Result TSBPxmlbeanshotoManage(@RequestBody CollectVO collectVO) throws Exception {
         Result result = new Result();
         if (null == collectVO.getSynchroStatus()|| "".equals(collectVO.getSynchroStatus())) {
             result.setStateCode(400);
@@ -48,12 +48,12 @@ public class CollectPhotoController {
             return result;
         }
         // 1、获取某特定状态的数据
-        List<BasicPersonInfoPO> listBean = collectService.listQualifiedBasicPerson(collectVO);
+        List<BasicPersonInfo> listBean = collectService.listQualifiedBasicPerson(collectVO);
         collectVO.setSynchroStatus(collectVO.getSynchroStatus());
         int a = collectService.updateUserInfoStatusByIdCardAndName(collectVO);
 
         // 2、根据线程动态划分数量cert
-        // List<List<BasicPersonInfoPO>> dynamicList = ListThreadUtil.dynamicListThread(listBean,5);
+        // List<List<BasicPersonInfo>> dynamicList = ListThreadUtils.dynamicListThread(listBean,5);
 
         // 3、遍历集合,开始跑线程
         // for (int i = 0; i < 5; i++) {

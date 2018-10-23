@@ -1,14 +1,14 @@
 package com.tecsun.card.controller;
 
 import com.tecsun.card.common.ThreadPoolUtil;
-import com.tecsun.card.common.clarencezeroutils.ListThreadUtil;
+import com.tecsun.card.common.clarencezeroutils.ListThreadUtils;
 import com.tecsun.card.common.clarencezeroutils.MyFileUtils;
 import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.controller.threadtask.synchro.cardsynchro.CollectToCardSynchroThreadTask;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.mid.MidImgDAO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
@@ -60,10 +60,10 @@ public class CollectToCardUserSynchroController {
             threadCount = collectVO.getThreadCount();
         }
 
-        List<BasicPersonInfoPO>       qualifiedUserList = collectService.listQualifiedBasicPerson(collectVO);
-        List<List<BasicPersonInfoPO>> basicPersonList   = ListThreadUtil.dynamicListThread(qualifiedUserList, threadCount);
-        for (List<BasicPersonInfoPO> basicPersonInfoPOS : basicPersonList) {
-            ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, midService, basicPersonInfoPOS, null, imgPath, null, false));
+        List<BasicPersonInfo>       qualifiedUserList = collectService.listQualifiedBasicPerson(collectVO);
+        List<List<BasicPersonInfo>> basicPersonList   = ListThreadUtils.dynamicListThread(qualifiedUserList, threadCount);
+        for (List<BasicPersonInfo> basicPersonInfos : basicPersonList) {
+            ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, midService, basicPersonInfos, null, imgPath, null, false));
         }
         return null;
     }
@@ -103,10 +103,10 @@ public class CollectToCardUserSynchroController {
         // 如果图片文件夹路径为空,则通过身份证从数据库获取图片
         if (!ObjectUtils.notEmpty(imgPath)) {
             logger.info("[采集库 => 正式库] 本次同步从数据库获取人员图片");
-            List<BasicPersonInfoPO>       qualifiedUserList = collectService.listQualifiedBasicPerson(collectVO);
-            List<List<BasicPersonInfoPO>> basicPersonList   = ListThreadUtil.dynamicListThread(qualifiedUserList, threadCount);
-            for (List<BasicPersonInfoPO> basicPersonInfoPOS : basicPersonList) {
-                ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, midService, basicPersonInfoPOS, null, imgPath, null, false));
+            List<BasicPersonInfo>       qualifiedUserList = collectService.listQualifiedBasicPerson(collectVO);
+            List<List<BasicPersonInfo>> basicPersonList   = ListThreadUtils.dynamicListThread(qualifiedUserList, threadCount);
+            for (List<BasicPersonInfo> basicPersonInfos : basicPersonList) {
+                ThreadPoolUtil.getThreadPool().execute(new CollectToCardSynchroThreadTask(collectService, cardService, midService, basicPersonInfos, null, imgPath, null, false));
             }
         } else if (null != imgPath && !("").equals(imgPath)) {
             // 否则,则文件夹获取身份证信息,进行同步
@@ -114,7 +114,7 @@ public class CollectToCardUserSynchroController {
             // 获取文件夹路径下的所有身份证号码
             List<String> idCardList = MyFileUtils.getAllFileNameNoSuffix(imgPath);
             // 为每个线程分配人数
-            List<List<String>> idCardThreadList = ListThreadUtil.dynamicListThread(idCardList, threadCount);
+            List<List<String>> idCardThreadList = ListThreadUtils.dynamicListThread(idCardList, threadCount);
             for (List<String> stringList : idCardThreadList) {
                 // 交付线程执行 stringList 包含人员身份证信息
                 ThreadPoolUtil.getThreadPool()
@@ -146,7 +146,7 @@ public class CollectToCardUserSynchroController {
             // }
 
             // 2、判断采集库是否存在
-            BasicPersonInfoPO collectUser = collectService.getBasicInfoByIDCard(idCard, null);
+            BasicPersonInfo collectUser = collectService.getBasicInfoByIDCard(idCard, null);
             if (!ObjectUtils.notEmpty(collectUser)) {
                 errorList.add(idCard + "_采集库不存在");
                 continue;

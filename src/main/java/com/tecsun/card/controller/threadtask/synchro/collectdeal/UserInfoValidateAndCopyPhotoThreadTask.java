@@ -1,11 +1,12 @@
 package com.tecsun.card.controller.threadtask.synchro.collectdeal;
 
-import com.tecsun.card.common.Constants;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.Constants;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
 import com.tecsun.card.service.MidService;
+import net.sf.jsqlparser.expression.operators.arithmetic.Concat;
 import org.apache.commons.io.FileUtils;
 import org.apache.log4j.Logger;
 import org.springframework.transaction.annotation.Propagation;
@@ -26,14 +27,14 @@ public class UserInfoValidateAndCopyPhotoThreadTask implements Runnable {
     // 正式库service类
     private CardService cardService;
 
-    private List<BasicPersonInfoPO> list;
+    private List<BasicPersonInfo> list;
     public UserInfoValidateAndCopyPhotoThreadTask(){}
 
 
     public UserInfoValidateAndCopyPhotoThreadTask (CollectService collectService,
                                                    MidService midService,
                                                    CardService cardService,
-                                                   List<BasicPersonInfoPO> list) {
+                                                   List<BasicPersonInfo> list) {
         this.collectService = collectService;
         this.midService = midService;
         this.cardService = cardService;
@@ -44,7 +45,7 @@ public class UserInfoValidateAndCopyPhotoThreadTask implements Runnable {
     @Transactional(propagation = Propagation.REQUIRED, rollbackFor = { Exception.class })
     public void run () {
         try {
-            for (BasicPersonInfoPO basicBean : list) {
+            for (BasicPersonInfo basicBean : list) {
                 CollectVO beanDao = new CollectVO();
                 String dealMsg = "";
                 String idCard = basicBean.getCertNum();
@@ -53,9 +54,9 @@ public class UserInfoValidateAndCopyPhotoThreadTask implements Runnable {
                 boolean babyCardResult = false;
                 babyCardResult = CollectPersonInfoValidateUtil.BabyCard(idCard);
                 if (babyCardResult) {
-                    basicBean.setIsBaby(Constants.babyCard);
+                    basicBean.setIsBaby(Constants.COLLECT_IS_BABY);
                 } else {
-                    basicBean.setIsBaby(Constants.notBabyCard);
+                    basicBean.setIsBaby(Constants.COLLECT_NOT_BABY);
                 }
                 boolean basicInfoValidResult = CollectPersonInfoValidateUtil.validateBasicInfoNotNull(basicBean);
                 beanDao.setBadyCard(basicBean.getIsBaby());

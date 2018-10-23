@@ -2,7 +2,7 @@ package com.tecsun.card.dao.mid;
 
 import com.tecsun.card.entity.beandao.mid.MidImgDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import org.apache.ibatis.annotations.Param;import org.mybatis.spring.annotation.MapperScan;
 
 import java.util.List;
@@ -23,5 +23,5 @@ public interface MidDao {
      * @param idCard
      * @return
      */
-    BasicPersonInfoPO getBasicPersonByIdCardInMid(@Param("idCard")String idCard);
+    BasicPersonInfo getBasicPersonByIdCardInMid(@Param("idCard")String idCard);
 }

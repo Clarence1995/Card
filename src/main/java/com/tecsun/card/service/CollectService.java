@@ -2,7 +2,7 @@ package com.tecsun.card.service;
 
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.vo.CollectVO;
 
 import java.util.List;
@@ -41,7 +41,7 @@ public interface CollectService {
      * @createTime 2018-09-21 15:48
      * @updateTime
      */
-    List<BasicPersonInfoPO> getUserInfoWithRepeat(String idCard, String name);
+    List<BasicPersonInfo> getUserInfoWithRepeat(String idCard, String name);
 
     /**
      * @return java.util.List<com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO>
@@ -54,7 +54,7 @@ public interface CollectService {
     List<BasicPersonInfoDAO> listAllUserIDCard();
 
     /**
-     * @return java.util.List<com.tecsun.card.entity.po.BasicPersonInfoPO>
+     * @return java.util.List<com.tecsun.card.entity.po.BasicPersonInfo>
      * @Description 从中间表20获取区外人员信息
      * @param: idCard
      * @param: name
@@ -62,7 +62,7 @@ public interface CollectService {
      * @createTime 2018-09-27 09:13
      * @updateTime
      */
-    BasicPersonInfoPO getSingleBasicPersonByIdcardFromMidTwenty(String idCard, String name);
+    BasicPersonInfo getSingleBasicPersonByIdcardFromMidTwenty(String idCard, String name) throws Exception;
 
     // ~ UPDATE
 
@@ -74,7 +74,7 @@ public interface CollectService {
      * @createTime 2018-09-19 17:01
      * @updateTime
      */
-    int updateUserInfoStatusByIdCardAndName(CollectVO CollectVO);
+    int updateUserInfoStatusByIdCardAndName(CollectVO CollectVO) throws Exception;
 
 
     /**
@@ -100,7 +100,7 @@ public interface CollectService {
      * @createTime 2018-09-14 17:13
      * @updateTime
      */
-    BasicPersonInfoPO getBasicInfoByIDCard(String idCard, String name);
+    BasicPersonInfo getBasicInfoByIDCard(String idCard, String name) throws Exception;
 
     /**
      * @return
@@ -110,15 +110,15 @@ public interface CollectService {
      * @createTime 2018-09-14 17:34
      * @updateTime
      */
-    boolean validateuserInfo(BasicPersonInfoPO basicBean);
+    boolean validateuserInfo(BasicPersonInfo basicBean);
 
-    List<BasicPersonInfoPO> listAllBasicPersonInfoPO();
-
-
-    List<BasicPersonInfoPO> listQualifiedBasicPerson(CollectVO synchroStatus);
+    List<BasicPersonInfo> listAllBasicPersonInfoPO();
 
 
-    List<BasicPersonInfoPO> getBasicInfoFromList(List<String> idCardList);
+    List<BasicPersonInfo> listQualifiedBasicPerson(CollectVO synchroStatus);
+
+
+    List<BasicPersonInfo> getBasicInfoFromList(List<String> idCardList);
 
     List<VisualDataDoughunDAO> getVDBasicPersonAnalyse();
 

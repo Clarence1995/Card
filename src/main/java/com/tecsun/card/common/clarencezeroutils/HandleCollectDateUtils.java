@@ -2,11 +2,7 @@ package com.tecsun.card.common.clarencezeroutils;
 
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
-import com.tecsun.card.entity.po.Ac01PO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**

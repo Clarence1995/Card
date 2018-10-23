@@ -8,7 +8,7 @@
          2、GUARDIAN_NAME 修改 70: GUARDIAN_NAME, 采集库 GUARDIANNAME
          3、expressAddress 修改 70 expressAddress 采集库 express_Address
     -->
-    <select id="getSingleBasicPersonByIdcardFromMidTwenty" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+    <select id="getSingleBasicPersonByIdcardFromMidTwenty" resultType="com.tecsun.card.entity.po.BasicPersonInfo">
         SELECT address,addressCode,
         birthday,
         certType, cert_num as certNum,cert_validity AS certValidity,

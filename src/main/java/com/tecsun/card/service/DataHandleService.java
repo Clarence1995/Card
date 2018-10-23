@@ -3,6 +3,9 @@ package com.tecsun.card.service;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.card.Ac01DAO;
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
+import com.tecsun.card.entity.vo.GongAnInfoVO;
+import com.tecsun.card.exception.HttpNetWorkException;
 
 import java.io.IOException;
 import java.util.List;
@@ -23,6 +26,31 @@ public interface DataHandleService {
      */
     Result handleUserInfo(String filePath, String logPath, boolean copy);
 
+    /**
+     * @Description 单个人员数据同步同步
+     * @return com.tecsun.card.entity.Result
+     * @param: idCard                          身份证号码
+     * @param: imgFilePath                     数据中心处理过的照片路径
+     * @param: eCopyImgFromHadDeal             是否需要复制数据中心处理过的照片到本地
+     * @param: egetImgFromDatabase             是否从本地数据库获取公安照片
+     * @param: eValidateUserInfo               是否校验人员基础信息
+     * @param: eGetCollectDataFromFourty       是否需要从40采集库获取人员基本信息
+     * @param: eCompareWithGongAnDatabase      是否需要和公安库进行比对
+     * @param: eDeleteAC01User                 是否需要删除AC01表(用于人员异常信息再同步)
+     * @author 0214
+     * @createTime 2018-10-11 11:20
+     * @updateTime
+     */
+    public Result handleCollectSynchro(String idCard,
+                                       Boolean egetImgFromDatabase,
+                                       Boolean eValidateUserInfo,
+                                       Boolean eGetCollectDataFromFourty,
+                                       Boolean eCompareWithGongAnDatabase,
+                                       Boolean eDeleteAC01User,
+                                       Boolean eCopyImgFromHadDeal,
+                                       String imgFilePath
+    );
+
 
     /**
      * @return com.tecsun.card.entity.Result
@@ -33,7 +61,7 @@ public interface DataHandleService {
      * @createTime 2018-09-21 15:26
      * @updateTime
      */
-    Result handleCollectDateRepeat(String logFilePath, Integer threadCount) throws IOException;
+    Boolean handleCollectDateRepeat(String idCard, String logFilePath) throws IOException;
 
 
     /**
@@ -45,7 +73,7 @@ public interface DataHandleService {
      * @return
      * @throws IOException
      */
-    boolean getImgFromDatabaseByIdCard(String idCard, boolean copyImg, String... args) throws IOException;
+    Boolean getImgFromDatabaseByIdCard(String idCard, boolean copyImg, String... args) throws IOException;
 
 
     /**
@@ -57,7 +85,7 @@ public interface DataHandleService {
      * @return
      * @throws IOException
      */
-    boolean getImgFromTSBByIdCard(String idCard, boolean copyImg, String... args) throws IOException;
+    Boolean getImgFromTSBByIdCard(String idCard, boolean copyImg, String... args) throws IOException;
 
     /**
      * 依据东软数据库更新卡管库、采集库单位名称和单位编号
@@ -70,8 +98,31 @@ public interface DataHandleService {
 
     /**
      * 依据东软数据库更新卡管库、采集库单位名称和单位编号
+     *
      * @param logFilePath
      */
-    Result handleDongRuanSynchro(List<BasicPersonInfoDAO> collectList, List<Ac01DAO> cardList,String logFilePath);
+    Result handleDongRuanSynchro(List<BasicPersonInfoDAO> collectList, List<Ac01DAO> cardList, String logFilePath);
 
-    }
+    /**
+     * 审核采集人员数据
+     * @param userInfo
+     * @return
+     */
+    Boolean checkCollectUserInfo(BasicPersonInfo userInfo);
+
+    /**
+     * 依据身份证号码调用公安接口获取用户信息
+     * @param idCard
+     * @return
+     */
+    GongAnInfoVO getUserInfoFromGongAnByIdCard(String idCard) throws IOException;
+
+    /**
+     * 和公安数据库进行比对
+     * @param userInfo
+     * @return
+     */
+    Boolean compareWithGongAnUserInfo(BasicPersonInfo userInfo) throws Exception
+    ;
+
+}

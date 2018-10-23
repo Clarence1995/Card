@@ -5,7 +5,7 @@ import com.tecsun.card.entity.beandao.card.Ac01DAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
 import com.tecsun.card.entity.po.AZ01PO;
 import com.tecsun.card.entity.po.Ac01PO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.entity.vo.SynchroExcelVO;
 import com.tecsun.card.exception.MyException;
@@ -104,6 +104,14 @@ public interface CardService {
 
     // ~ DELETE ---------------------------------------------
 
+    /**
+     * 根据身份证、姓名删除AC01表中的人员数据
+     * @param idCard
+     * @param userName
+     * @return
+     */
+    boolean deleteAC01ByIdCardAndName(String idCard, String userName) throws Exception;
+
     // ~ INSERT ---------------------------------------------
 
     /**
@@ -132,12 +140,12 @@ public interface CardService {
      * @return boolean
      * @Description BUS_APPLY 和 AC01 同时插入 == 新申领操作
      * @param: ac01bean
-     * @param: basicPersonInfoPO
+     * @param: basicPersonInfo
      * @author 0214
      * @createTime 2018-09-20 11:01
      * @updateTime
      */
-    boolean insertCardAC01AndBusApplyFromCollect(Ac01PO ac01bean, BasicPersonInfoPO basicPersonInfoPO);
+    boolean insertCardAC01AndBusApplyFromCollect(Ac01PO ac01bean, BasicPersonInfo basicPersonInfo) throws Exception;
 
 
     // ~ ELSE
@@ -151,12 +159,13 @@ public interface CardService {
      * @createTime 2018-09-20 13:07
      * @updateTime
      */
-    void assembleAC01(Ac01PO ac01PO, BasicPersonInfoPO bean) throws Exception;
+    void assembleAC01(Ac01PO ac01PO, BasicPersonInfo bean) throws Exception;
 
 
     int updateAC01Status(Ac01DAO acstatusBean);
 
 
     Result synchroFromExcel(SynchroExcelVO synchroExcelVO) throws Exception;
+
 
 }

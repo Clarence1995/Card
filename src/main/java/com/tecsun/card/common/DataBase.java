@@ -26,7 +26,7 @@ public class DataBase {
     }
 
     private static final void initJedisCenterPool() {
-        // String jedisInfoStr = Config.getInstance().get("redis_core_database");
+        // String jedisInfoStr = PropertyUtils.getInstance().get("redis_core_database");
         String redisURL = "127.0.0.1_6379";
         if (StringUtils.isNotBlank(redisURL)) {
             String[] jedisInfo = redisURL.split("_");

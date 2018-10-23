@@ -1,5 +1,6 @@
 package com.tecsun.card.service.impl;
 
+import com.tecsun.card.common.clarencezeroutils.DateUtils;
 import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.common.excel.ExcelUtil;
 import com.tecsun.card.dao.card.CardDao;
@@ -11,7 +12,7 @@ import com.tecsun.card.entity.beandao.card.Ac01DAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
 import com.tecsun.card.entity.po.AZ01PO;
 import com.tecsun.card.entity.po.Ac01PO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.entity.vo.SynchroExcelVO;
@@ -19,7 +20,6 @@ import com.tecsun.card.exception.MyException;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
 import com.tecsun.card.service.RedisService;
-import oracle.jdbc.driver.Const;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -186,6 +186,34 @@ public class CardServiceImpl implements CardService {
 
     // ~ DELETE ------------------------------------------------
 
+    /**
+     * @return boolean
+     * @Description 根据身份证、姓名删除AC01表中的人员数据
+     * @param: idCard
+     * @param: userName
+     * @author 0214
+     * @createTime 2018-10-11 09:59
+     * @updateTime
+     */
+    @Override
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public boolean deleteAC01ByIdCardAndName(String idCard, String userName) throws Exception {
+        if (null == idCard) {
+            throw new NullPointerException("AC01表待删除的人员ID不能为空");
+        }
+        try {
+            int i = cardDao.deleteAC01ByIdCardAndName(idCard, userName);
+            if (i > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (Exception e) {
+            logger.error("[0214] 删除AC01表中人员数据出错。人员身份证号: {}, 姓名: {}, 数据回滚。出错原因: {}", idCard, userName, e);
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            return false;
+        }
+    }
 
     // ~ INSERT ------------------------------------------------
 
@@ -230,40 +258,42 @@ public class CardServiceImpl implements CardService {
      */
     @Override
     @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
-    public boolean insertCardAC01AndBusApplyFromCollect(Ac01PO ac01bean, BasicPersonInfoPO basicBean) {
-        BusApplyPO busApplyPO = new BusApplyPO();
-        // 01 新申领
-        busApplyPO.setBusinessType(Constants.BUS_APLY_BUSINESSTYPE_NEW_APPLY);
-        // 00 申请
-        busApplyPO.setStatus(Constants.BUS_APPLY_STATUS_APPLY);
-        // 01 个人申领
-        busApplyPO.setSource(Constants.BUS_APPLY_SOURCE_PERSON);
-        // 区域编码
-        busApplyPO.setRegionalId(basicBean.getRegionalCode());
-        busApplyPO.setApplyName(basicBean.getName());
-        busApplyPO.setApplyIdCard(basicBean.getCertNum());
-        busApplyPO.setApplyMobile(basicBean.getMobile());
-        busApplyPO.setFlag(Constants.BUS_APPLY_FLAG_CHOOSE_NUM_NO);
-        busApplyPO.setChooseCardNo("");
-        // 00 不更换银行卡号
-        busApplyPO.setChangeBankNo(Constants.BUS_APPLY_CHANGE_BANK_NUM_NO);
-        // 申办人
-        // 服务银行
-        // 邮件地址
-        String expressAddress = basicBean.getExpressAddress();
-        if (null != expressAddress) {
-            // 01 邮寄
-            busApplyPO.setIsexpress(Constants.BUS_APPLY_EXPRESS_YES);
-            busApplyPO.setExpressName(basicBean.getExpressName());
-            busApplyPO.setExpressPhone(basicBean.getExpressPhone());
-            busApplyPO.setExpressAddress(expressAddress);
-        } else {
-            // 00 不邮寄
-            busApplyPO.setIsexpress(Constants.BUS_APPLY_EXPRESS_NO);
-        }
-
-        // 新增 AC01
+    public boolean insertCardAC01AndBusApplyFromCollect(Ac01PO ac01bean, BasicPersonInfo basicBean) throws Exception{
         try {
+            BusApplyPO busApplyPO = new BusApplyPO();
+            // 01 新申领
+            busApplyPO.setBusinessType(Constants.BUS_APLY_BUSINESSTYPE_NEW_APPLY);
+            // 00 申请
+            busApplyPO.setStatus(Constants.BUS_APPLY_STATUS_APPLY);
+            // 01 个人申领
+            busApplyPO.setSource(Constants.BUS_APPLY_SOURCE_PERSON);
+            // 申领表编码
+            busApplyPO.setApplyFormCode(Constants.ADMIN + ac01bean.getAac301() + DateUtils.getYYYYMMDDFormatDateStr() + (new Random().nextInt(90) + 10));
+            // 区域编码
+            busApplyPO.setRegionalId(basicBean.getRegionalCode());
+            busApplyPO.setApplyName(basicBean.getName());
+            busApplyPO.setApplyIdCard(basicBean.getCertNum());
+            busApplyPO.setApplyMobile(basicBean.getMobile());
+            busApplyPO.setFlag(Constants.BUS_APPLY_FLAG_CHOOSE_NUM_NO);
+            busApplyPO.setChooseCardNo("");
+            // 00 不更换银行卡号
+            busApplyPO.setChangeBankNo(Constants.BUS_APPLY_CHANGE_BANK_NUM_NO);
+            // 申办人
+            // 服务银行
+            // 邮件地址
+            String expressAddress = basicBean.getExpressAddress();
+            if (null != expressAddress) {
+                // 01 邮寄
+                busApplyPO.setIsexpress(Constants.BUS_APPLY_EXPRESS_YES);
+                busApplyPO.setExpressName(basicBean.getExpressName());
+                busApplyPO.setExpressPhone(basicBean.getExpressPhone());
+                busApplyPO.setExpressAddress(expressAddress);
+            } else {
+                // 00 不邮寄
+                busApplyPO.setIsexpress(Constants.BUS_APPLY_EXPRESS_NO);
+            }
+
+            // 新增 AC01
             this.insertAC01(ac01bean);
             // 获取人员ID
             busApplyPO.setPersonId(ac01bean.getIdKey());
@@ -275,12 +305,12 @@ public class CardServiceImpl implements CardService {
             collectVO.setCertNum(ac01bean.getAac147());
             collectVO.setSynchroStatus(Constants.COLLECT_HAD_SYNCHRO);
             collectVO.setDealStaus(Constants.COLLECT_QUALIFIED);
-            collectVO.setDealMsg("");
+            collectVO.setDealMsg("合格");
             collectService.updateUserInfoStatusByIdCardAndName(collectVO);
         } catch (Exception e) {
             logger.error("[0214 数据同步出错,现进行回滚操作。原因为{}", e);
             TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
-            return false;
+            throw new Exception(e.getMessage());
         }
         logger.info("[0214 采集同步] 人员ID: {} 已成功同步至卡管库", ac01bean.getAac147());
         return true;
@@ -314,7 +344,7 @@ public class CardServiceImpl implements CardService {
      * @updateTime
      */
     @Override
-    public void assembleAC01(Ac01PO ac01, BasicPersonInfoPO bean) throws Exception {
+    public void assembleAC01(Ac01PO ac01, BasicPersonInfo bean) throws Exception {
         // 个人编号
         ac01.setAac001(this.generateAC01IUserNumber());
         // 单位编号
@@ -373,7 +403,11 @@ public class CardServiceImpl implements CardService {
         // 身份证号
         ac01.setAac147(bean.getCertNum().trim());
         // 国籍
-        ac01.setAac161(bean.getGuoJi().trim());
+        if ("中国".equals(bean.getGuoJi())) {
+            ac01.setAac161("CHN");
+        } else {
+            ac01.setAac161(bean.getGuoJi());
+        }
         // 固定号码
         if (ObjectUtils.notEmpty(bean.getPhone())) {
             ac01.setAae005(bean.getPhone().trim());

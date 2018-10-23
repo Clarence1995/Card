@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
  * 十、字符串空格替换
  * 十一、日期格式检验(yyyyMMdd、yyyy-MM-dd的)
  */
-public class ValidateUtil {
+public class ValidateUtils {
 
 	private static final Pattern PCHARANDDIGIT =
 			Pattern.compile("[0-9a-zA-Z]+");
@@ -55,7 +55,7 @@ public class ValidateUtil {
 					".jl.cn|.hl.cn|.js.cn|.zj.cn|.ah.cn|.fj.cn|.jx.cn|.sd.cn|.ha.cn|.hb.cn|.hn.cn|.gd.cn|.gx.cn|.hi.cn|" +
 					".sc.cn|.gz.cn|.yn.cn|.xz.cn|.sn.cn|.gs.cn|.qh.cn|.nx.cn|.xj.cn|.tw.cn|.hk.cn|.mo.cn|.cn";
 
-	private ValidateUtil() {
+	private ValidateUtils() {
 		// 私有类构造方法
 	}
 

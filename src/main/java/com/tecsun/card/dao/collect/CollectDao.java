@@ -2,7 +2,7 @@ package com.tecsun.card.dao.collect;
 
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import org.apache.ibatis.annotations.Param;
 import org.mybatis.spring.annotation.MapperScan;
 
@@ -20,7 +20,7 @@ public interface CollectDao {
      * @createTime 2018-09-14 17:21
      * @updateTime
      */
-    BasicPersonInfoPO getSingleBasicPersonByIdcard(@Param("idCard") String idCard, @Param("name") String name);
+    BasicPersonInfo getSingleBasicPersonByIdcard(@Param("idCard") String idCard, @Param("name") String name);
 
 
     /**
@@ -37,14 +37,14 @@ public interface CollectDao {
     /**
      * @param idCard
      * @param name
-     * @return java.util.List<com.tecsun.card.entity.po.BasicPersonInfoPO>
+     * @return java.util.List<com.tecsun.card.entity.po.BasicPersonInfo>
      * @Description 获取人员信息详情(包含重复数据)
      * @param:
      * @author 0214
      * @createTime 2018-09-21 15:50
      * @updateTime
      */
-    List<BasicPersonInfoPO> getUserInfoWithRepeat(@Param("idCard")String idCard, @Param("name")String name);
+    List<BasicPersonInfo> getUserInfoWithRepeat(@Param("idCard")String idCard, @Param("name")String name);
 
 
     /***
@@ -85,14 +85,14 @@ public interface CollectDao {
     // ~ INSERT
 
 
-    List<BasicPersonInfoPO> lisetBasicPersonInfo();
+    List<BasicPersonInfo> lisetBasicPersonInfo();
 
 
-    List<BasicPersonInfoPO> listQualifiedBasicPerson(BasicPersonInfoDAO basicPersonInfoDAO);
+    List<BasicPersonInfo> listQualifiedBasicPerson(BasicPersonInfoDAO basicPersonInfoDAO);
 
     String getZangName(String idCard);
 
-    List<BasicPersonInfoPO> listBasicBeanByIdList(List<String> idCardList);
+    List<BasicPersonInfo> listBasicBeanByIdList(List<String> idCardList);
 
     List<VisualDataDoughunDAO> listVDBasicPersonAnalyset();
 

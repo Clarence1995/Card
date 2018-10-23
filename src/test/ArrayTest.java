@@ -1,13 +1,10 @@
 import com.tecsun.card.common.clarencezeroutils.DateUtils;
 import com.tecsun.card.common.clarencezeroutils.StringUtils;
-import com.tecsun.card.common.clarencezeroutils.ValidateUtil;
+import com.tecsun.card.common.clarencezeroutils.ValidateUtils;
 import com.tecsun.card.common.txt.TxtUtil;
-import com.tecsun.card.entity.Constants;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
-import com.tecsun.card.common.clarencezeroutils.ListThreadUtil;
+import com.tecsun.card.entity.po.BasicPersonInfo;
+import com.tecsun.card.common.clarencezeroutils.ListThreadUtils;
 import com.tecsun.card.entity.vo.UserInfoVO;
-import io.jsonwebtoken.lang.Assert;
-import lombok.ToString;
 import org.junit.Test;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
@@ -207,7 +204,7 @@ public class ArrayTest {
 
     @Test
     public void ValidateTest() {
-        BasicPersonInfoPO bean = new BasicPersonInfoPO();
+        BasicPersonInfo bean = new BasicPersonInfo();
         System.out.println(bean.getName());
     }
 
@@ -234,13 +231,13 @@ public class ArrayTest {
     @Test
     public void testValidate() {
         String  mobile = "18189913965";
-        boolean result = ValidateUtil.isMobile(mobile);
+        boolean result = ValidateUtils.isMobile(mobile);
         System.out.println(result);
     }
 
     @Test
     public void lombokTest() {
-        BasicPersonInfoPO bean = new BasicPersonInfoPO();
+        BasicPersonInfo bean = new BasicPersonInfo();
         bean.setAac001("hello");
 
         System.out.println(bean.getAac001());
@@ -254,7 +251,7 @@ public class ArrayTest {
             testList.add(i, "i" + i);
         }
 
-        List<List<String>> result = ListThreadUtil.dynamicListThread(testList);
+        List<List<String>> result = ListThreadUtils.dynamicListThread(testList);
         int                sum    = 0;
         for (List list : result) {
             System.out.println(list.size());

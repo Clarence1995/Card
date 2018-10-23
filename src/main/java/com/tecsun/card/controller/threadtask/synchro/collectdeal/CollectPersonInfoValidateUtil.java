@@ -1,8 +1,7 @@
 package com.tecsun.card.controller.threadtask.synchro.collectdeal;
 
-import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
-import com.tecsun.card.common.clarencezeroutils.ValidateUtil;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.common.clarencezeroutils.ValidateUtils;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import org.apache.commons.lang.StringUtils;
 
 import java.text.ParseException;
@@ -10,7 +9,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class CollectPersonInfoValidateUtil {
-    public static boolean validateBasicInfoNotNull(BasicPersonInfoPO bvo) {
+    public static boolean validateBasicInfoNotNull(BasicPersonInfo bvo) {
         String msg = "";
         if (StringUtils.isBlank(bvo.getName())) {
             msg = "姓名为空";
@@ -62,7 +61,7 @@ public class CollectPersonInfoValidateUtil {
             bvo.setDealMsg(msg);
             return false;
         }
-        if (StringUtils.isBlank(bvo.getMobile()) || ValidateUtil.isMobile(bvo.getMobile())) {
+        if (StringUtils.isBlank(bvo.getMobile()) || ValidateUtils.isMobile(bvo.getMobile())) {
             msg = "手机号码不正确或为空值";
             bvo.setDealMsg(msg);
             return false;

@@ -7,7 +7,7 @@ import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.visualdata.UserDAO;
 import com.tecsun.card.entity.beandao.visualdata.VisualDataDoughunDAO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.service.*;
@@ -19,7 +19,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.File;
 import java.io.IOException;
@@ -79,8 +78,8 @@ public class SpirngMybatisTest {
 
     @Test
     public void testCard() {
-        BasicPersonInfoPO basicPersonInfoPO = collectDao.getSingleBasicPersonByIdcard("511621199501157759", "姜家俊");
-        System.out.println(basicPersonInfoPO);
+        BasicPersonInfo basicPersonInfo = collectDao.getSingleBasicPersonByIdcard("511621199501157759", "姜家俊");
+        System.out.println(basicPersonInfo);
     }
 
     @Test
@@ -182,7 +181,7 @@ public class SpirngMybatisTest {
 
     @Test
     public void testValidate () {
-        BasicPersonInfoPO bean = new BasicPersonInfoPO();
+        BasicPersonInfo bean = new BasicPersonInfo();
         bean.setCertNum("542626198012010047");
         bean.setRegionalCode("510100");
         bean.setGuoJi("a");
@@ -199,7 +198,7 @@ public class SpirngMybatisTest {
     }
 
     @Test
-    public void updateBasicInfo () {
+    public void updateBasicInfo () throws Exception {
         CollectVO collectVO = new CollectVO();
         collectVO.setCertNum("542626198012010047");
         collectVO.setSynchroStatus(Constants.COLLECT_HAD_SYNCHRO);
@@ -236,9 +235,9 @@ public class SpirngMybatisTest {
         CollectVO collectVO = new CollectVO();
         collectVO.setCertNum("511621199501157759");
         collectVO.setSynchroStatus("0");
-        List<BasicPersonInfoPO> listBean = collectService.listQualifiedBasicPerson(collectVO);
-        for (BasicPersonInfoPO basicPersonInfoPO : listBean) {
-            System.out.println(basicPersonInfoPO.getCertNum());
+        List<BasicPersonInfo> listBean = collectService.listQualifiedBasicPerson(collectVO);
+        for (BasicPersonInfo basicPersonInfo : listBean) {
+            System.out.println(basicPersonInfo.getCertNum());
         }
     }
 

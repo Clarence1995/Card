@@ -10,13 +10,19 @@ import java.util.Map;
 public class Constants {
 
     // ~-----------
-    public static final String SEPARATOR              = File.separator;
-    public static final String IMG_SUFFIX             = ".jpg";
-    public static final String TXT_SUFFIX             = ".txt";
-    public static final String EXCEL_SUFFIX           = ".xlsx";
-    public static final int    SUCCESS_RESULT_CODE    = 200;
-    public static final int    FAIL_RESULT_CODE       = 0;
-    public static final String IMG_113_FILE_ROOT_PATH = "E://tecsun//file//photo//personPhoto";
+    public static final String SEPARATOR                     = File.separator;
+    public static final String IMG_SUFFIX                    = ".jpg";
+    public static final String TXT_SUFFIX                    = ".txt";
+    public static final String EXCEL_SUFFIX                  = ".xlsx";
+    // ------------ 状态码 --------------
+    public static final int    FAIL_RESULT_CODE              = 0;
+    public static final int    SUCCESS_RESULT_CODE           = 200;
+    public static final int    GONG_AN_EXCEPTION_RESULT_CODE = 777;
+    public static final int    EXCEPTION_RESULT_CODE         = 999;
+    // ------------ 状态码 --------------
+
+    public static final String GONG_AN_SUCCESS_RESULT_CODE = "000";
+    public static final String IMG_113_FILE_ROOT_PATH      = "E://tecsun//file//photo//personPhoto";
 
 
     // 采集同步标志
@@ -276,6 +282,10 @@ public class Constants {
     // 此人在东软视图中不存在信息
     public static final int DONGRUAN_SYNCHRO_NO_INFORMATION = 2;
     // ----------- 是否已完成东软单位信息同步 END-----------
+
+    // 超级管理员用户名
+    public static final String ADMIN = "admin";
+
 
     // ~ HashMap --------------------------------------------------------
     // 区域信息编码(用于判断是否是区外异地

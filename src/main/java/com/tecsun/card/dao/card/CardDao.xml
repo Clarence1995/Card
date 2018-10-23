@@ -117,6 +117,19 @@
         </where>
     </select>
 
+    <select id="getAC01DetailByRegeionalCodeAndStatus" resultType="com.tecsun.card.entity.po.Ac01PO">
+        SELECT *
+        FROM AC01
+        <where>
+            <if test="regionalCode != null">
+                AAC301B = #{regionalCode}
+            </if>
+
+            <if test="userStatus != null">
+                STATUS = #{userStatus}
+            </if>
+        </where>
+    </select>
 
     <!-- 获取卡管库所有人员ID和姓名 -->
     <select id="listAllUserIdCardAndName" resultType="com.tecsun.card.entity.beandao.card.Ac01DAO">
@@ -161,7 +174,15 @@
         </set>
         WHERE id = #{az01DAO.cardId}
     </update>
-    <!--~ UPDATE ==============================-->
+    <!--~ DELETE ==============================-->
+    <delete id="deleteAC01ByIdCardAndName">
+        DELETE AC01
+        WHERE AAC147 = #{idCard}
+        <if test="userName != null">
+            AND AAC003 = #{userName}
+        </if>
+
+    </delete>
 
 
 
@@ -197,13 +218,13 @@
     <insert id="insertBusApply" parameterType="com.tecsun.card.entity.po.BusApplyPO">
         INSERT INTO BUS_APPLY
         (ID, PERSON_ID, BUSINESS_TYPE, STATUS, REGIONAL_ID,
-        APPLY_TIME, APPLY_NAME, APPLY_ID_CARD, APPLY_MOBILE, UPDATE_TIME,
+        APPLY_TIME, APPLY_NAME, APPLY_ID_CARD, APPLY_MOBILE,APPLY_FORM_CODE,
         SOURCE, FLAG, CHOOSE_CARD_NO, CHANGE_BANK_NO, ISEXPRESS,
         EXPRESS_NAME, EXPRESS_PHONE, EXPRESS_ADDRESS
         )
         VALUES
         (BUS_APPLY_SEQ_ID.nextval, #{personId}, #{businessType},#{status},#{regionalId},
-          sysdate,#{applyName},#{applyIdCard},#{applyMobile},sysdate,
+          sysdate,#{applyName},#{applyIdCard},#{applyMobile},#{applyFormCode},
           #{source},#{flag},#{chooseCardNo},#{changeBankNo},#{isexpress},
           #{expressName},#{expressPhone},#{expressAddress})
     </insert>
@@ -213,19 +234,7 @@
         INSERT INTO SYS_LOG (id,bus_type,person_id,content,create_time,update_date)
         values (sys_log_seq_id.nextval,#{bussinessType},#{userId},#{content},sysdate,sysdate)
     </insert>
-    <select id="getAC01DetailByRegeionalCodeAndStatus" resultType="com.tecsun.card.entity.po.Ac01PO">
-        SELECT *
-        FROM AC01
-        <where>
-            <if test="regionalCode != null">
-                AAC301B = #{regionalCode}
-            </if>
 
-            <if test="userStatus != null">
-                STATUS = #{userStatus}
-            </if>
-        </where>
-    </select>
 
 
 </mapper>

@@ -5,12 +5,12 @@
     <!-- ~SELECT =======================-->
     <select id="lisetBasicPersonInfo"
             parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO"
-            resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+            resultType="com.tecsun.card.entity.po.BasicPersonInfo">
         SELECT * FROM BASIC_PERSON_INFO where rownum &lt;10
     </select>
     <select id="listQualifiedBasicPerson"
             parameterType="com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO"
-            resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+            resultType="com.tecsun.card.entity.po.BasicPersonInfo">
         SELECT * FROM BASIC_PERSON_INFO b
         <where>
             <if test="certNum != null and certNum != ''">
@@ -31,7 +31,7 @@
         SELECT XM FROM (SELECT id,XM FROM ZANG_WEN WHERE SFZH = #{idCard} ORDER BY id DESC) WHERE ROWNUM = 1
     </select>
     <select id="listBasicBeanByIdList" parameterType="java.util.List"
-            resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+            resultType="com.tecsun.card.entity.po.BasicPersonInfo">
         SELECT * FROM BASIC_PERSON_INFO WHERE CERT_NUM IN
         <foreach collection="list" index="index" item="idCard" open="(" close=")" separator=",">
             #{idCard}
@@ -49,12 +49,12 @@
          2、GUARDIAN_NAME 修改 70: GUARDIAN_NAME, 采集库 GUARDIANNAME
          3、expressAddress 修改 70 expressAddress 采集库 express_Address
     -->
-    <select id="getSingleBasicPersonByIdcard" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+    <select id="getSingleBasicPersonByIdcard" resultType="com.tecsun.card.entity.po.BasicPersonInfo">
         SELECT address,addressCode,
         birthday,
         certType, cert_num as certNum,cert_validity AS certValidity,
         departmentno, departmentname, education,
-        EXPRESS_ADDRESS,
+        EXPRESS_ADDRESS AS expressAddress, EXPRESS_NAME AS expressName, EXPRESS_PHONE expressPhone,
         GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,
         hkbNo,hkType,hkProperty,
         isExpress,
@@ -97,7 +97,7 @@
     </select>
 
     <!-- 获取人员信息详情(包含重复数据) -->
-    <select id="getUserInfoWithRepeat" resultType="com.tecsun.card.entity.po.BasicPersonInfoPO">
+    <select id="getUserInfoWithRepeat" resultType="com.tecsun.card.entity.po.BasicPersonInfo">
         SELECT address,addressCode,
         birthday,
         certType, cert_num as certNum,cert_validity AS certValidity,
@@ -167,6 +167,8 @@
             </if>
         </set>
         <where>
+            <!-- 采集库重复数据置为9 -->
+            SYNCHROSTATUS <![CDATA[ != ]]> '9'
             <if test="name != null and name != ''">
                 name = #{name}
             </if>

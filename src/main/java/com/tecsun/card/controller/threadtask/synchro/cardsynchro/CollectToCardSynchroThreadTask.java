@@ -4,7 +4,7 @@ import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.beandao.mid.MidImgDAO;
 import com.tecsun.card.entity.po.Ac01PO;
-import com.tecsun.card.entity.po.BasicPersonInfoPO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
@@ -29,31 +29,31 @@ import java.util.List;
  * @updateTime
  */
 public class CollectToCardSynchroThreadTask implements Runnable {
-    private static final Logger                  logger = LoggerFactory.getLogger(CollectToCardSynchroThreadTask.class);
+    private static final Logger                logger = LoggerFactory.getLogger(CollectToCardSynchroThreadTask.class);
     /**
      * 采集库service类
      */
-    private              CollectService          collectService;
+    private              CollectService        collectService;
     /**
      * 中间库service类(存放公安照片)
      */
-    private              MidService              midService;
+    private              MidService            midService;
     /**
      * 正式库service类
      */
-    private              CardService             cardService;
+    private              CardService           cardService;
     /**
      * List
      */
-    private              List<BasicPersonInfoPO> beanList;
+    private              List<BasicPersonInfo> beanList;
     /**
      * 待复制照片路径
      */
-    private              String                  imgPath;
+    private              String                imgPath;
     /**
      * 只包含idCard的照片
      */
-    private              List<String>            idCardList;
+    private              List<String>          idCardList;
 
     /**
      * 日志路径
@@ -71,7 +71,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
     private boolean getImgFromDatabase = false;
 //    public DataSynchroRunnable(CollectService collectService,
 //                                          CardService cardService,
-//                                          List<BasicPersonInfoPO> beanList,
+//                                          List<BasicPersonInfo> beanList,
 //                                          String logPath,
 //                                          String imgPath,
 //                                          boolean getImgFromDatabase
@@ -83,7 +83,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
 //
 //    public DataSynchroRunnable(CollectService collectService,
 //                                          CardService cardService,
-//                                          List<BasicPersonInfoPO> beanList,
+//                                          List<BasicPersonInfo> beanList,
 //                                          String imgPath) {
 //        this.collectService = collectService;
 //        this.midService = midService;
@@ -95,7 +95,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
 //    public DataSynchroRunnable(CollectService collectService,
 //                                          MidService midService,
 //                                          CardService cardService,
-//                                          List<BasicPersonInfoPO> beanList,
+//                                          List<BasicPersonInfo> beanList,
 //                                          boolean getImgFromDatabase) {
 //        this.collectService = collectService;
 //        this.midService = midService;
@@ -115,7 +115,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
     public CollectToCardSynchroThreadTask(CollectService collectService,
                                           CardService cardService,
                                           MidService midService,
-                                          List<BasicPersonInfoPO> beanList,
+                                          List<BasicPersonInfo> beanList,
                                           List<String> idCardList,
                                           String imgPath,
                                           String logPath,
@@ -166,24 +166,24 @@ public class CollectToCardSynchroThreadTask implements Runnable {
 //                     continue;
 //                 }
 
-//                BasicPersonInfoPO basicPersonInfoPO = collectService.getBasicInfoByIDCard(idCard);
-                BasicPersonInfoPO basicPersonInfoPO = midService.getBasicInfoByIdCard(idCard);
-                if (null == basicPersonInfoPO) {
+//                BasicPersonInfo basicPersonInfo = collectService.getBasicInfoByIDCard(idCard);
+                BasicPersonInfo basicPersonInfo = midService.getBasicInfoByIdCard(idCard);
+                if (null == basicPersonInfo) {
                     // 采集库不存在此人
                     logger.info("[采集库 => 卡管库] 此人{} 不存在采集库", idCard);
                     errorList.add(idCard + "_" + "采集库不存在");
                     continue;
                 }
                 // 2、人员信息校验
-                boolean validateSuccess = collectService.validateuserInfo(basicPersonInfoPO);
+                boolean validateSuccess = collectService.validateuserInfo(basicPersonInfo);
                 if (!validateSuccess) {
                     // 如果校验不成功,则跳出FOR循环,并更新用户信息 同步状态为:0 数据处理状态为 04
 //                    collectVO.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
 //                    collectVO.setDealStaus(Constants.COLLECT_USERINFO_ERROR);
-//                    collectVO.setDealMsg(basicPersonInfoPO.getDealMsg());
+//                    collectVO.setDealMsg(basicPersonInfo.getDealMsg());
 //                    collectService.updateUserInfoStatusByIdCardAndName(collectVO);
-                    logger.info("[采集库 => 卡管库] 人员:{} 信息校验失败~ {}", basicPersonInfoPO.getCertNum(), basicPersonInfoPO.getDealMsg());
-                    errorList.add(idCard + "_" + basicPersonInfoPO.getDealMsg());
+                    logger.info("[采集库 => 卡管库] 人员:{} 信息校验失败~ {}", basicPersonInfo.getCertNum(), basicPersonInfo.getDealMsg());
+                    errorList.add(idCard + "_" + basicPersonInfo.getDealMsg());
                     // 较验失败
                     FileUtils.copyFile(new File(srcImgPath), new File(errorImgpath + idCard + ".jpg"));
                     continue;
@@ -192,7 +192,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
 
                 Ac01PO ac01PO = new Ac01PO();
                 // 3-1、区域判断
-                String regionalCode = basicPersonInfoPO.getRegionalCode();
+                String regionalCode = basicPersonInfo.getRegionalCode();
                 if (regionalCode.length() == 6) {
                     // 549900
                     ac01PO.setAac301(Constants.OUTER_CODE_REGIONAL);
@@ -211,7 +211,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                 String codeForImg      = ac01PO.getAac301();
                 String localImgPath    = "E://tecsun//file//photo//personPhoto" + File.separator + codeForImg + File.separator + idCard + ".jpg";
                 String databaseImgPath = File.separator + codeForImg + File.separator + idCard + ".jpg";
-                basicPersonInfoPO.setPhotoUrl(databaseImgPath);
+                basicPersonInfo.setPhotoUrl(databaseImgPath);
                 if (getImgFromDatabase) {
                     // 照片[中间库10.24.250.20]
                     MidImgDAO midImgDAO = midService.getImgFromGONGAN(idCard);
@@ -251,19 +251,19 @@ public class CollectToCardSynchroThreadTask implements Runnable {
                 // 4、藏文
                 String zangName = collectService.getZangNameByIdCard(idCard);
                 if (null != zangName && !("").equals(zangName)) {
-                    basicPersonInfoPO.setZangName(zangName);
+                    basicPersonInfo.setZangName(zangName);
                 } else {
-                    basicPersonInfoPO.setZangName(Constants.ZANG_NAME_NOT_EXIST);
+                    basicPersonInfo.setZangName(Constants.ZANG_NAME_NOT_EXIST);
                 }
 
                 // 5、数据库同步
                 try {
-                    cardService.assembleAC01(ac01PO, basicPersonInfoPO);
+                    cardService.assembleAC01(ac01PO, basicPersonInfo);
                 } catch (Exception e) {
 
                 }
-                basicPersonInfoPO.setRegionalCode(ac01PO.getAac301());
-                boolean synchroBean = cardService.insertCardAC01AndBusApplyFromCollect(ac01PO, basicPersonInfoPO);
+                basicPersonInfo.setRegionalCode(ac01PO.getAac301());
+                boolean synchroBean = cardService.insertCardAC01AndBusApplyFromCollect(ac01PO, basicPersonInfo);
 
                 if (synchroBean) {
                     logger.info("[采集库 => 卡管库] 人员: {} 已正常同步完成", idCard);

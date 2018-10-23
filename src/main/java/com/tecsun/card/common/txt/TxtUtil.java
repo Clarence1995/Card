@@ -20,16 +20,15 @@ public class TxtUtil<E> {
     private static final Logger logger = LoggerFactory.getLogger(TxtUtil.class);
 
     public static void main(String[] args) throws IOException {
-        File file = new File("D://Data//yaan//txt//6.txt");
+        File file = new File("E:\\MyTest\\txt\\mylove.txt");
 
 
         List<String> list = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
-            list.add("张颖"+i);
+            list.add("你好,张汶沣,请多指教~ "+i);
         }
 
-        writeTxt(file,"utf-8",list);
-//        appendTxt(file, list);
+        appendTxt(file, list);
     }
 
     private E e;
@@ -147,13 +146,14 @@ public class TxtUtil<E> {
      * @param file
      * @param list
      */
-    public static void appendTxt(File file, Collection<?> list) {
-        FileWriter writer = null;
+    public static void appendTxt(File file, Collection<?> list) throws FileNotFoundException, UnsupportedEncodingException {
+        BufferedWriter writer = null;
         try {
-            writer = new FileWriter(file, true);
-            writer.write(System.getProperty("line.separator"));
-            writer.write(String.valueOf(list));
-
+            writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file, true), "UTF-8"));
+            for (Object o : list) {
+                writer.write(o.toString());
+                writer.write(System.getProperty("line.separator"));
+            }
         } catch (IOException io) {
             io.printStackTrace();
         } finally {

@@ -10,7 +10,7 @@ import java.util.List;
  * 用于动态拆分数组,可动态分配每个线程所拥有的数组大小、线程数量
  * 如果设置了数组大小,则动态线程数量设置无效
  */
-public class ListThreadUtil {
+public class ListThreadUtils {
     /**
      * 默认线程数量
      */

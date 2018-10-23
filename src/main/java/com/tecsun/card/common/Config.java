@@ -12,7 +12,7 @@ import java.util.Properties;
  */
 public class Config {
     private Log log = LogFactory.getLog(Config.class);
-    private static final String CONIFG_FILE = "/config_1.8.properties";
+    private static final String CONIFG_FILE = "/clarencezero.properties";
     private static Config instance = null;
     private Properties props = new Properties();
 

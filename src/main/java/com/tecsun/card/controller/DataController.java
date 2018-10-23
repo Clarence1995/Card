@@ -17,10 +17,7 @@ import io.swagger.annotations.ApiParam;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,6 +65,15 @@ public class DataController {
         result.setStateCode(Constants.SUCCESS_RESULT_CODE);
         result.setMsg("测试成功");
         logger.info("{}{}{}", "hello", "hello", "hello");
+        return result;
+    }
+
+    @ApiOperation("[0214 公安接口测试")
+    @RequestMapping(value = "/gongAnUserInfo/{idCard}", method = RequestMethod.GET)
+    @ResponseBody
+    public Result gongAnUserInfo(@ApiParam(name = "idCard", value = "身份证号码", required = true) @PathVariable("idCard") String idCard) {
+        Result result = new Result();
+
         return result;
     }
 
@@ -186,7 +192,7 @@ public class DataController {
             // 4、获取当前文件夹所有TSB照片的绝对路径
             List<String> stringList = MyFileUtils.getAllFileNameWithSuffix(imgPath, true, ".jpg");
             // 5、分配线程
-            List<List<String>> resultList = ListThreadUtil.dynamicListThreadBySize(stringList, packageNum);
+            List<List<String>> resultList = ListThreadUtils.dynamicListThreadBySize(stringList, packageNum);
             // 6、创建目标文件夹
             MyFileUtils.generateFilePath(disPath);
             // 开启线程
@@ -306,16 +312,24 @@ public class DataController {
      * @updateTime
      */
     @ApiOperation("采集人员同步到卡管库,使用数据中心处理过的照片来进行同步")
-    @RequestMapping(value = "/synchro/{imgFilePath}/{txtFilePath}/{logFilePath}/{threadCount}/{eValidateUserInfo}/{copyImg}/{eIgnoreCollect}", method = RequestMethod.POST)
-    public Result synchro(@ApiParam(name = "imgFilePath", value = "照片文件夹路径", required = false) @PathVariable("imgFilePath") String imgFilePath,
+    @RequestMapping(
+            value = "/synchro/{gIdCardFromTxt}/{txtFilePath}/{gIDCardFromImgFile}/{imgFilePath}/{gImgFromDatabase}/{validateUserInfo}/{ignoreFourtyCollectDatabase}/{compareWithGongAnDatabase}/{deleteAC01User}/{copyImgFromHadDeal}/{logFilePath}/{threadCount}",
+            method = RequestMethod.POST)
+    public Result synchro(@ApiParam(name = "gIdCardFromTxt", value = "是否需要从TXT获取身份证", required = true) @PathVariable("gIdCardFromTxt") String gIdCardFromTxt,
                           @ApiParam(name = "txtFilePath", value = "TXT文本文件", required = false) @PathVariable("txtFilePath") String txtFilePath,
-                          @ApiParam(name = "eValidateUserInfo", value = "是否开启基本信息校验", required = true) @PathVariable("eValidateUserInfo") String eValidateUserInfo,
-                          @ApiParam(name = "copyImg", value = "是否需要复制照片", required = true) @PathVariable("copyImg") String copyImg,
+                          @ApiParam(name = "gIdCardFromImgFile", value = "是否需要从数据中心处理过的照片获取身份证号", required = true) @PathVariable("gIDCardFromImgFile") String gIdCardFromImgFile,
+                          @ApiParam(name = "imgFilePath", value = "照片文件夹路径", required = false) @PathVariable("imgFilePath") String imgFilePath,
+                          @ApiParam(name = "gImgFromDatabase", value = "是否需要从本地数据库获取照片", required = true) @PathVariable("gImgFromDatabase") String gImgFromDatabase,
+                          @ApiParam(name = "validateUserInfo", value = "是否需要基本信息校验", required = true) @PathVariable("validateUserInfo") String validateUserInfo,
+                          @ApiParam(name = "ignoreFourtyCollectDatabase", value = "是否需要从40采集库获取人员基本信息", required = true) @PathVariable("ignoreFourtyCollectDatabase") String ignoreFourtyCollectDatabase,
+                          @ApiParam(name = "compareWithGongAnDatabase", value = "是否需要和公安库进行比对", required = true) @PathVariable("compareWithGongAnDatabase") String compareWithGongAnDatabase,
+                          @ApiParam(name = "deleteAC01User", value = " 是否需要删除AC01表(用于人员异常信息再同步", required = true) @PathVariable("deleteAC01User") String deleteAC01User,
+                          @ApiParam(name = "copyImgFromHadDeal", value = "是否需要复制数据中心处理过的照片到文件夹", required = true) @PathVariable("copyImgFromHadDeal") String copyImgFromHadDeal,
                           @ApiParam(name = "logFilePath", value = "日志文件夹路径", required = true) @PathVariable("logFilePath") String logFilePath,
-                          @ApiParam(name = "eIgnoreCollect", value = "是否跳过40采集库", required = true) @PathVariable("eIgnoreCollect") String eIgnoreCollect,
-                          @ApiParam(name = "threadCount", value = "线程数量", required = true) @PathVariable("threadCount") Integer threadCount) throws IOException {
+                          @ApiParam(name = "threadCount", value = "线程数量", required = true) @PathVariable("threadCount") Integer threadCount)
+            throws IOException {
+        // 1、为空判断
         Result result = new Result();
-        // 1、获取照片文件夹身份证ID,并分配线程
         if (ObjectUtils.isEmpty(imgFilePath)) {
             result.setStateCode(Constants.FAIL_RESULT_CODE);
             logger.error("[0214 采集同步] 照片文件夹不能为空");
@@ -334,42 +348,59 @@ public class DataController {
             logger.error("[0214 采集同步] 线程数量不能为空");
             return result;
         }
-        // TSB处理照片的文件夹路径
-        imgFilePath = StringUtils.stringFormatPath(imgFilePath, null);
-        // 日志文件路径
+        // 2、数据定义
+        List<String> idCardList            = null;
+        String       whereRoald            = "";
+        boolean      eGetIdCardFromTxt     = Boolean.parseBoolean(gIdCardFromTxt);
+        boolean      eGetIdCardFromImgFile = Boolean.parseBoolean(gIdCardFromImgFile);
         logFilePath = StringUtils.stringFormatPath(logFilePath, null);
-        // TXT文本路径
-        txtFilePath = StringUtils.stringFormatPath(txtFilePath, Constants.TXT_SUFFIX);
-        // 是否需要校验人员基本信息
-        boolean      eValidate = Boolean.parseBoolean(eValidateUserInfo);
-        // 是否需要复制照片(包含TSB数据中心处理过的照片、数据库照片)
-        boolean      eCopyImg  = Boolean.parseBoolean(copyImg);
-        // 是否跳过40采集库数据
-        boolean      ignoreCollect  = Boolean.parseBoolean(eIgnoreCollect);
-        List<String> idCardList;
-        String whereRoald = "";
-        if (eCopyImg) {
-            // 如果复制照片,则从照片文件夹里面获取IDCARD
+        // 3、数据源IDCardList获取
+        if (eGetIdCardFromTxt) {
+            txtFilePath = StringUtils.stringFormatPath(txtFilePath, Constants.TXT_SUFFIX);
+            // 从TXT文件获取
+            try {
+                idCardList = TxtUtil.readLine(txtFilePath, "UTF-8");
+            } catch (Exception e) {
+                logger.error("[0214 采集同步] 读取TXT文件出错,原因: {}", e);
+                result.setStateCode(Constants.FAIL_RESULT_CODE);
+                result.setMsg(e.getMessage());
+                return result;
+            }
+            whereRoald = " [TXT文件]";
+        } else if (eGetIdCardFromImgFile) {
+            imgFilePath = StringUtils.stringFormatPath(imgFilePath, null);
             idCardList = MyFileUtils.getAllFileNameNoSuffix(imgFilePath);
             whereRoald = " [数据中心处理照片文件夹] ";
-        } else {
-            // 从TXT文件获取
-            idCardList = TxtUtil.readLine(txtFilePath, "UTF-8");
-            whereRoald = " [TXT文件]";
         }
-        logger.info("[0214 采集同步] 本次同步人员数据从 {} 获取,总人数为: {}", whereRoald, idCardList.size());
-        // 分配线程
-        List<List<String>> idCardThreadList = ListThreadUtil.dynamicListThread(idCardList, threadCount);
+
+        boolean eGetImgFromDatabase          = Boolean.parseBoolean(gImgFromDatabase);
+        boolean eValidateUserInfo            = Boolean.parseBoolean(validateUserInfo);
+        boolean eIgnoreFourtyCollectDatabase = Boolean.parseBoolean(ignoreFourtyCollectDatabase);
+        boolean eCompareWithGongAnDatabase   = Boolean.parseBoolean(compareWithGongAnDatabase);
+        boolean eDeleteAC01User              = Boolean.parseBoolean(deleteAC01User);
+        boolean eCopyImgFromHadDeal          = Boolean.parseBoolean(copyImgFromHadDeal);
+
+        // 4、线程分配数据
+        List<List<String>> idCardThreadList = ListThreadUtils.dynamicListThread(idCardList, threadCount);
+
+        // 5、
         for (List<String> stringList : idCardThreadList) {
-            ThreadPoolUtil.getThreadPool().execute(
-                    new DataSynchroRunnable(collectService, null, cardService, midService,
-                            stringList, imgFilePath, logFilePath, false, eValidate, true, eCopyImg, ignoreCollect));
+            ThreadPoolUtil.getThreadPool().execute(new DataSynchroRunnable(
+                            dataHandleService,
+                            stringList,
+                            logFilePath,
+                            eGetImgFromDatabase,
+                            eValidateUserInfo,
+                            eIgnoreFourtyCollectDatabase,
+                            eCompareWithGongAnDatabase,
+                            eDeleteAC01User,
+                            eCopyImgFromHadDeal,
+                            imgFilePath
+            ));
         }
+        logger.info("[0214 采集同步] 本次同步人员数据从 {} 获取,总人数为: {}。共有{} 个线程。每个线程处理数量为: {}", whereRoald, idCardList.size(), threadCount, idCardThreadList.get(0).size());
         result.setStateCode(Constants.SUCCESS_RESULT_CODE);
-        result.setMsg("[0214 采集同步] 本次同步的人员数据共有:"
-                + idCardList.size() + "人,分为" + threadCount
-                + "个线程,每个线程处理数量为: "
-                + idCardThreadList.get(0).size());
+        result.setMsg("[0214 采集同步] 本次同步人员数据从" + whereRoald + "获取,总人数为: " + idCardList.size() + "。共有" + threadCount + " 个线程。每个线程处理数量为: " + idCardThreadList.get(0).size());
         return result;
     }
 
@@ -398,7 +429,14 @@ public class DataController {
             return result;
         }
         logFilePath = StringUtils.stringFormatPath(logFilePath, null);
-        return dataHandleService.handleCollectDateRepeat(logFilePath, threadCount);
+        // 1、获取重复数据
+        List<String> idCardList = collectService.getUserRepeatIdCard();
+        for (String idCard : idCardList) {
+            dataHandleService.handleCollectDateRepeat(idCard, logFilePath);
+        }
+        result.setStateCode(Constants.SUCCESS_RESULT_CODE);
+        result.setMsg("[0214 采集库人员重复处理已全部完成,成功处理人员数量为: " + idCardList.size());
+        return result;
     }
 
 
@@ -454,6 +492,8 @@ public class DataController {
         // dataHandleService.handle
         return null;
     }
+
+
     //~--------------------------------采集数据处理 Controller END 20180914-----------------------------
 
 

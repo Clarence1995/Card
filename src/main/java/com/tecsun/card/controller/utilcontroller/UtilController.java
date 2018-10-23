@@ -1,7 +1,7 @@
 package com.tecsun.card.controller.utilcontroller;
 
 import com.tecsun.card.common.ThreadPoolUtil;
-import com.tecsun.card.common.clarencezeroutils.ListThreadUtil;
+import com.tecsun.card.common.clarencezeroutils.ListThreadUtils;
 import com.tecsun.card.common.clarencezeroutils.MyFileUtils;
 import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.controller.utilcontroller.thread.ImgZipThread;
@@ -57,7 +57,7 @@ public class UtilController {
             // 1、遍历文件夹,获取所有图片路径
             List<String> fileNames = MyFileUtils.getAllFileNameWithSuffix(utilBean.getImgPath(), true, ".jpg");
             // 2、分线程复制,一个线程数量
-            List<List<String>> threadList = ListThreadUtil.dynamicListThread(fileNames, Integer.parseInt(utilBean.getImgCount()));
+            List<List<String>> threadList = ListThreadUtils.dynamicListThread(fileNames, Integer.parseInt(utilBean.getImgCount()));
             // 3、遍历集合,开启线程
             for (int i = 0; i < threadList.size(); i++) {
                 ThreadPoolUtil.getThreadPool()
