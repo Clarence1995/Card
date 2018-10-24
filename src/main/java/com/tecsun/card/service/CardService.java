@@ -148,6 +148,17 @@ public interface CardService {
     boolean insertCardAC01AndBusApplyFromCollect(Ac01PO ac01bean, BasicPersonInfo basicPersonInfo) throws Exception;
 
 
+    /**
+     * 批量插入数据库操作
+     * @param ac01Bean
+     * @param busApplyBean
+     * @param basicPersonInfo
+     * @return
+     * @throws Exception
+     */
+    boolean insertAC01AndBusApplyAndUpdateCollect(List<Ac01PO> ac01Bean, List<BusApplyPO> busApplyBean, List<BasicPersonInfo> basicPersonInfo) throws Exception;
+
+
     // ~ ELSE
 
     /**

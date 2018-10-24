@@ -17,6 +17,7 @@ import com.tecsun.card.entity.beandao.mid.MidImgDAO;
 import com.tecsun.card.entity.po.AZ01PO;
 import com.tecsun.card.entity.po.Ac01PO;
 import com.tecsun.card.entity.po.BasicPersonInfo;
+import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.entity.vo.CollectVO;
 import com.tecsun.card.entity.vo.GongAnInfoVO;
 import com.tecsun.card.entity.vo.UserInfoVO;
@@ -388,10 +389,6 @@ public class DataHandleServiceImpl implements DataHandleService {
         }
     }
 
-    public static void main(String[] args) {
-        String baby = "1";
-        System.out.println(false ? "1":"1");
-    }
     /**
      * 单个人员数据同步同步
      *
@@ -700,6 +697,8 @@ public class DataHandleServiceImpl implements DataHandleService {
             basicPersonInfo.setZangName(Constants.ZANG_NAME_NOT_EXIST);
         }
 
+
+
         // 9、同步
         try {
             // 9-1、人员信息组装
@@ -712,29 +711,76 @@ public class DataHandleServiceImpl implements DataHandleService {
         }
         basicPersonInfo.setRegionalCode(ac01PO.getAac301());
         // △ 数据库同步
-        try {
-            boolean synchroBean = cardService.insertCardAC01AndBusApplyFromCollect(ac01PO, basicPersonInfo);
-            if (synchroBean) {
-                logger.info("[0214 采集同步] 人员: {} 已正常同步完成", idCard);
-                myResult.setStateCode(Constants.SUCCESS_RESULT_CODE);
-                myResult.setMsg("同步完成");
-                return myResult;
-            } else {
-                logger.info("[0214 采集同步] 人员: {} 同步失败", idCard);
-                myResult.setStateCode(Constants.FAIL_RESULT_CODE);
-                myResult.setMsg("同步失败");
-                return myResult;
-            }
 
-        } catch (Exception e) {
-            myResult.setStateCode(Constants.EXCEPTION_RESULT_CODE);
-            if (null != e.getMessage()) {
-                myResult.setMsg(idCard + "_同步失败" + e.getMessage());
-            } else {
-                myResult.setMsg(idCard + "_写入数据库失败");
-            }
-            return myResult;
+        // 10、组装
+        BusApplyPO busApplyPO = new BusApplyPO();
+        // 01 新申领
+        busApplyPO.setBusinessType(Constants.BUS_APLY_BUSINESSTYPE_NEW_APPLY);
+        // 00 申请
+        busApplyPO.setStatus(Constants.BUS_APPLY_STATUS_APPLY);
+        // 01 个人申领
+        busApplyPO.setSource(Constants.BUS_APPLY_SOURCE_PERSON);
+        // 申领表编码
+        busApplyPO.setApplyFormCode(Constants.ADMIN + ac01PO.getAac301() + DateUtils.getYYYYMMDDFormatDateStr() + (new Random().nextInt(90) + 10));
+        // 区域编码
+        busApplyPO.setRegionalId(basicPersonInfo.getRegionalCode());
+        busApplyPO.setApplyName(basicPersonInfo.getName());
+        busApplyPO.setApplyIdCard(basicPersonInfo.getCertNum());
+        busApplyPO.setApplyMobile(basicPersonInfo.getMobile());
+        busApplyPO.setFlag(Constants.BUS_APPLY_FLAG_CHOOSE_NUM_NO);
+        busApplyPO.setChooseCardNo("");
+        // 00 不更换银行卡号
+        busApplyPO.setChangeBankNo(Constants.BUS_APPLY_CHANGE_BANK_NUM_NO);
+        // 申办人
+        // 服务银行
+        // 邮件地址
+        String expressAddress = basicPersonInfo.getExpressAddress();
+        if (null != expressAddress) {
+            // 01 邮寄
+            busApplyPO.setIsexpress(Constants.BUS_APPLY_EXPRESS_YES);
+            busApplyPO.setExpressName(basicPersonInfo.getExpressName());
+            busApplyPO.setExpressPhone(basicPersonInfo.getExpressPhone());
+            busApplyPO.setExpressAddress(expressAddress);
+        } else {
+            // 00 不邮寄
+            busApplyPO.setIsexpress(Constants.BUS_APPLY_EXPRESS_NO);
         }
+        
+        Map<String, Object> resultMap = new HashMap<>(3);
+        resultMap.put("BASIC_PERSON_INFO", basicPersonInfo);
+        resultMap.put("AC01", ac01PO);
+        resultMap.put("BUS_APPLY", busApplyPO);
+
+        myResult.setStateCode(Constants.SUCCESS_RESULT_CODE);
+        myResult.setMsg("该人员可以进行同步");
+        myResult.setData(resultMap);
+        return myResult;
+        // 20181024 修改 START ------
+        // try {
+        //     boolean synchroBean = cardService.insertCardAC01AndBusApplyFromCollect(ac01PO, basicPersonInfo);
+        //     if (synchroBean) {
+        //         logger.info("[0214 采集同步] 人员: {} 已正常同步完成", idCard);
+        //         myResult.setStateCode(Constants.SUCCESS_RESULT_CODE);
+        //         myResult.setMsg("同步完成");
+        //         return myResult;
+        //     } else {
+        //         logger.info("[0214 采集同步] 人员: {} 同步失败", idCard);
+        //         myResult.setStateCode(Constants.FAIL_RESULT_CODE);
+        //         myResult.setMsg("同步失败");
+        //         return myResult;
+        //     }
+        //
+        // } catch (Exception e) {
+        //     myResult.setStateCode(Constants.EXCEPTION_RESULT_CODE);
+        //     if (null != e.getMessage()) {
+        //         myResult.setMsg(idCard + "_同步失败" + e.getMessage());
+        //     } else {
+        //         myResult.setMsg(idCard + "_写入数据库失败");
+        //     }
+        //     return myResult;
+        // }
+        // 20181024 修改 START ------
+
     }
 
 

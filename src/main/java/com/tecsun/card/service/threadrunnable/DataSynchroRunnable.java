@@ -5,6 +5,9 @@ import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
+import com.tecsun.card.entity.po.Ac01PO;
+import com.tecsun.card.entity.po.BasicPersonInfo;
+import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 /**
@@ -195,8 +199,9 @@ public class DataSynchroRunnable implements Runnable {
         ArrayList<String> errorLogList = new ArrayList<>();
         // 异常日志信息
         ArrayList<String> exceptionLogList = new ArrayList<>();
-
-
+        List<Ac01PO> userList = new ArrayList<>(10);
+        List<BusApplyPO> busApplyList = new ArrayList<>(10);
+        List<BasicPersonInfo> basicPersonInfoList = new ArrayList<>(10);
         // 遍历集合
         for (String idCard : idCardList) {
             try {
@@ -214,6 +219,20 @@ public class DataSynchroRunnable implements Runnable {
                     errorLogList.add(result.getMsg());
                     bad++;
                 } else if (Constants.SUCCESS_RESULT_CODE == result.getStateCode()) {
+                    // 人员成功
+                    if (userList.size() == 10) {
+                        // 插入操作
+
+                    } else{
+                        Map<String, Object> resultMap = (Map<String, Object>) result.getData();
+                        Ac01PO ac01Bean = (Ac01PO) resultMap.get("AC01");
+                        BusApplyPO busApplyBean = (BusApplyPO)resultMap.get("BUS_APPLY");
+                        BasicPersonInfo basicPersonInfoBean = (BasicPersonInfo) resultMap.get("BASIC_PERSON_INFO");
+                        userList.add(ac01Bean);
+                        busApplyList.add(busApplyBean);
+                        basicPersonInfoList.add(basicPersonInfoBean);
+                    }
+
                     good++;
                 } else {
                     bad++;

@@ -421,7 +421,7 @@ public class DataController {
         // 4、线程分配数据
         List<List<String>> idCardThreadList = ListThreadUtils.dynamicListThread(idCardList, threadCount);
 
-        // 5、
+        // 5、100 => 10 个 10
         for (List<String> stringList : idCardThreadList) {
             ThreadPoolUtil.getThreadPool().execute(new DataSynchroRunnable(
                     dataHandleService,

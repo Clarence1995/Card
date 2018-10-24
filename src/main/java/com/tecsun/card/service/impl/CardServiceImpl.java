@@ -316,6 +316,23 @@ public class CardServiceImpl implements CardService {
         return true;
     }
 
+
+    /**
+     * 批量插入数据库
+     * @param ac01Bean
+     * @param busApplyBean
+     * @param basicPersonInfo
+     * @return
+     * @throws Exception
+     */
+    @Override
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public boolean insertAC01AndBusApplyAndUpdateCollect(List<Ac01PO> ac01Bean, List<BusApplyPO> busApplyBean, List<BasicPersonInfo> basicPersonInfo) throws Exception {
+        cardDao.insertUserBatch(ac01Bean);
+
+        return false;
+    }
+
     @Override
     @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
     public int updateAC01Status(Ac01DAO acstatusBean) {

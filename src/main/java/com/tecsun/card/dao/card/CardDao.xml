@@ -235,6 +235,32 @@
         values (sys_log_seq_id.nextval,#{bussinessType},#{userId},#{content},sysdate,sysdate)
     </insert>
 
+    <!-- 批量增加ac01-->
+    <insert id="insertUserBatch" parameterType="java.util.List">
+        <selectKey keyProperty="idKey" resultType="long" order="BEFORE">
+            select AC01_SEQ_ID.NEXTVAL from dual
+        </selectKey>
+        insert into AC01
+        (ID,AAB001,Aab004,Aab099,Aac002,
+        Aac003,Aac003a,Aac004,Aac005,Aac006,
+        Aac009,Aac010,Aac012,Aac042,Aac044,
+        Aac043,Aac058,Aac060,Aac067,Aac147,
+        Aac161,Aae005,Aae006,Aae007,Aca111,
+        apply_status,apply_type,create_operator_id,email,mark_status,
+        photourl,status,validtag,CREATE_TIME,AAC001,
+        AAC301,AAC301A,AAC301B,COLLECT_FLAG
+        )
+        values
+        (#{idKey},#{aab001},#{aab004},#{aab099},#{aac002},
+        #{aac003},#{aac003a},#{aac004},#{aac005},#{aac006},
+        #{aac009},#{aac010},#{aac012},#{aac042},#{aac044},
+        #{aac043},#{aac058},#{aac060},#{aac067},#{aac147},
+        #{aac161},#{aae005},#{aae006},#{aae007},#{aca111},
+        #{applyStatus},#{applyType},#{createOperatorId},#{email},#{markStatus},
+        #{photourl},#{status},#{validtag},sysdate,#{aac001},
+        #{aac301},#{aac301a},#{aac301b},#{collectFlag}
+        )
+    </insert>
 
 
 </mapper>

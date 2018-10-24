@@ -172,4 +172,11 @@ public interface CardDao {
      */
     String getColumnCommonByColumnName(@Param("tableName") String tableName, @Param("columnName") String columnName);
 
+    /**
+     * 批量插入aC01人员表
+     *
+     * @param ac01Bean
+     * @return
+     */
+    int insertUserBatch(@Param("ac01Bean")List<Ac01PO> ac01Bean);
 }
