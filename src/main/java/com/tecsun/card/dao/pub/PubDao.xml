@@ -17,18 +17,7 @@
         </collection>
     </resultMap>
 
-    <update id="updateDict" parameterType="com.tecsun.card.entity.vo.RedisDictVO">
-        UPDATE T_DICTIONARY
-        <set>
-            <if test="name != null and name != ''">
-                name = #{name},
-            </if>
-            <if test="code != null and code != ''">
-                code = #{code},
-            </if>
-        </set>
-        WHERE diction_Id = #{dictionId}
-    </update>
+    <!--========= SELECT 0214 START 20181024 ==============-->
 
     <select id="initRedis" resultMap="lazyChildDict">
         SELECT DICTION_ID AS ID,NAME,STATUS,DEL,GROUPID,CODE
@@ -42,6 +31,26 @@
       WHERE GROUPID = #{code}
       AND GROUPID <![CDATA[!=]]> '0'
     </select>
+
+    <select id="countRegionalCode" resultType="java.lang.Integer">
+        SELECT COUNT(DISTINCT_ID) FROM T_DISTINCT WHERE DISTINCT_ID = #{regionalCode}
+    </select>
+
+    <update id="updateDict" parameterType="com.tecsun.card.entity.vo.RedisDictVO">
+        UPDATE T_DICTIONARY
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="code != null and code != ''">
+                code = #{code},
+            </if>
+        </set>
+        WHERE diction_Id = #{dictionId}
+    </update>
+
+
+    <!--========= SELECT 0214 END 20181024 ==============-->
 
     <!--<select id="getChildByGroupCode" resultMap=""-->
 </mapper>

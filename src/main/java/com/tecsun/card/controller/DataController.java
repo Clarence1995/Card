@@ -1,11 +1,15 @@
 package com.tecsun.card.controller;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.tecsun.card.common.ThreadPoolUtil;
 import com.tecsun.card.common.clarencezeroutils.*;
 import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.controller.utilcontroller.thread.ImgZipThread;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
+import com.tecsun.card.entity.vo.GongAnInfoVO;
 import com.tecsun.card.service.CardService;
 import com.tecsun.card.service.CollectService;
 import com.tecsun.card.service.DataHandleService;
@@ -18,9 +22,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import springfox.documentation.spring.web.json.Json;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -73,7 +80,36 @@ public class DataController {
     @ResponseBody
     public Result gongAnUserInfo(@ApiParam(name = "idCard", value = "身份证号码", required = true) @PathVariable("idCard") String idCard) {
         Result result = new Result();
+        if (null == idCard || !ValidateUtils.isIdCard(idCard)) {
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
+            return result;
+        } else {
+            try {
+                GongAnInfoVO gongAnResult = dataHandleService.getUserInfoFromGongAnByIdCard(idCard);
+            } catch (Exception e) {
+                logger.error("[0214 公安接口测试异常] 原因: {}", e);
+                result.setStateCode(Constants.EXCEPTION_RESULT_CODE);
+                result.setMsg("[0214 公安接口测试异常" + e.getMessage());
+                return result;
+            }
+        }
+        return result;
+    }
 
+    @ApiOperation("[0214 公安批量接口测试")
+    @RequestMapping(value = "/gongAnUserInfoBatch", method = RequestMethod.POST)
+    @ResponseBody
+    public Result gongAnUserInfoBatch(@ApiParam(name = "userInfoList", value = "人员身份证号/姓名JSON集合", required = true)
+                                      @RequestParam("userInfoList") String userInfoList) {
+        Result result = new Result();
+        try {
+            String query = new String(userInfoList.getBytes(), "GBK");
+            System.out.println(query);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        List<GongAnInfoVO> userInfos = new Gson().fromJson(userInfoList, new TypeToken<ArrayList<GongAnInfoVO>>() {
+        }.getType());
         return result;
     }
 
@@ -313,7 +349,7 @@ public class DataController {
      */
     @ApiOperation("采集人员同步到卡管库,使用数据中心处理过的照片来进行同步")
     @RequestMapping(
-            value = "/synchro/{gIdCardFromTxt}/{txtFilePath}/{gIDCardFromImgFile}/{imgFilePath}/{gImgFromDatabase}/{validateUserInfo}/{ignoreFourtyCollectDatabase}/{compareWithGongAnDatabase}/{deleteAC01User}/{copyImgFromHadDeal}/{logFilePath}/{threadCount}",
+            value = "/synchro/{gIdCardFromTxt}/{txtFilePath}/{gIDCardFromImgFile}/{imgFilePath}/{gImgFromDatabase}/{validateUserInfo}/{ignoreFourtyCollectDatabase}/{compareWithGongAnDatabase}/{deleteAC01User}/{copyImgFromHadDeal}/{markPriority}/{logFilePath}/{threadCount}",
             method = RequestMethod.POST)
     public Result synchro(@ApiParam(name = "gIdCardFromTxt", value = "是否需要从TXT获取身份证", required = true) @PathVariable("gIdCardFromTxt") String gIdCardFromTxt,
                           @ApiParam(name = "txtFilePath", value = "TXT文本文件", required = false) @PathVariable("txtFilePath") String txtFilePath,
@@ -325,6 +361,7 @@ public class DataController {
                           @ApiParam(name = "compareWithGongAnDatabase", value = "是否需要和公安库进行比对", required = true) @PathVariable("compareWithGongAnDatabase") String compareWithGongAnDatabase,
                           @ApiParam(name = "deleteAC01User", value = " 是否需要删除AC01表(用于人员异常信息再同步", required = true) @PathVariable("deleteAC01User") String deleteAC01User,
                           @ApiParam(name = "copyImgFromHadDeal", value = "是否需要复制数据中心处理过的照片到文件夹", required = true) @PathVariable("copyImgFromHadDeal") String copyImgFromHadDeal,
+                          @ApiParam(name = "markPriority", value = "是否需要标记人员为优先", required = true) @PathVariable("markPriority") String markPriority,
                           @ApiParam(name = "logFilePath", value = "日志文件夹路径", required = true) @PathVariable("logFilePath") String logFilePath,
                           @ApiParam(name = "threadCount", value = "线程数量", required = true) @PathVariable("threadCount") Integer threadCount)
             throws IOException {
@@ -354,6 +391,9 @@ public class DataController {
         boolean      eGetIdCardFromTxt     = Boolean.parseBoolean(gIdCardFromTxt);
         boolean      eGetIdCardFromImgFile = Boolean.parseBoolean(gIdCardFromImgFile);
         logFilePath = StringUtils.stringFormatPath(logFilePath, null);
+        if (null != imgFilePath) {
+            imgFilePath = StringUtils.stringFormatPath(imgFilePath, null);
+        }
         // 3、数据源IDCardList获取
         if (eGetIdCardFromTxt) {
             txtFilePath = StringUtils.stringFormatPath(txtFilePath, Constants.TXT_SUFFIX);
@@ -368,34 +408,33 @@ public class DataController {
             }
             whereRoald = " [TXT文件]";
         } else if (eGetIdCardFromImgFile) {
-            imgFilePath = StringUtils.stringFormatPath(imgFilePath, null);
             idCardList = MyFileUtils.getAllFileNameNoSuffix(imgFilePath);
             whereRoald = " [数据中心处理照片文件夹] ";
         }
-
         boolean eGetImgFromDatabase          = Boolean.parseBoolean(gImgFromDatabase);
         boolean eValidateUserInfo            = Boolean.parseBoolean(validateUserInfo);
         boolean eIgnoreFourtyCollectDatabase = Boolean.parseBoolean(ignoreFourtyCollectDatabase);
         boolean eCompareWithGongAnDatabase   = Boolean.parseBoolean(compareWithGongAnDatabase);
         boolean eDeleteAC01User              = Boolean.parseBoolean(deleteAC01User);
         boolean eCopyImgFromHadDeal          = Boolean.parseBoolean(copyImgFromHadDeal);
-
+        boolean eMarkPriority                = Boolean.parseBoolean(markPriority);
         // 4、线程分配数据
         List<List<String>> idCardThreadList = ListThreadUtils.dynamicListThread(idCardList, threadCount);
 
         // 5、
         for (List<String> stringList : idCardThreadList) {
             ThreadPoolUtil.getThreadPool().execute(new DataSynchroRunnable(
-                            dataHandleService,
-                            stringList,
-                            logFilePath,
-                            eGetImgFromDatabase,
-                            eValidateUserInfo,
-                            eIgnoreFourtyCollectDatabase,
-                            eCompareWithGongAnDatabase,
-                            eDeleteAC01User,
-                            eCopyImgFromHadDeal,
-                            imgFilePath
+                    dataHandleService,
+                    stringList,
+                    logFilePath,
+                    eGetImgFromDatabase,
+                    eValidateUserInfo,
+                    eIgnoreFourtyCollectDatabase,
+                    eCompareWithGongAnDatabase,
+                    eDeleteAC01User,
+                    eCopyImgFromHadDeal,
+                    eMarkPriority,
+                    imgFilePath
             ));
         }
         logger.info("[0214 采集同步] 本次同步人员数据从 {} 获取,总人数为: {}。共有{} 个线程。每个线程处理数量为: {}", whereRoald, idCardList.size(), threadCount, idCardThreadList.get(0).size());

@@ -25,7 +25,7 @@ public class Ac01PO {
 
     private String aac003a;
 
-    private String aac004;
+    private Integer aac004;
 
     private String aac005;
 

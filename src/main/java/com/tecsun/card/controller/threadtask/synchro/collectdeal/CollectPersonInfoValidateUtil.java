@@ -1,5 +1,6 @@
 package com.tecsun.card.controller.threadtask.synchro.collectdeal;
 
+import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
 import com.tecsun.card.common.clarencezeroutils.ValidateUtils;
 import com.tecsun.card.entity.po.BasicPersonInfo;
 import org.apache.commons.lang.StringUtils;
@@ -21,7 +22,7 @@ public class CollectPersonInfoValidateUtil {
             bvo.setDealMsg(msg);
             return false;
         }
-        if (StringUtils.isBlank(bvo.getSex())) {
+        if (!ObjectUtils.notEmpty(bvo.getSex())) {
             msg = "性别为空";
             bvo.setDealMsg(msg);
             return false;

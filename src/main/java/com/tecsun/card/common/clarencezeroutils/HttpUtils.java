@@ -18,6 +18,30 @@ import java.net.URL;
  */
 public class HttpUtils {
     private static final Logger logger = LoggerFactory.getLogger(HttpUtils.class);
+    /**
+     * 请求方ID
+     */
+    public static final String SENDER_ID = "senderId";
+    /**
+     * 服务方ID
+     */
+    public static final String SERVICE_ID = "serviceId";
+    /**
+     * 授权信息
+     */
+    public static final String AUTHORIZE_INFO = "authorizeInfo";
+    /**
+     * 请求的webService接口方法
+     */
+    public static final String METHOD = "method";
+    /**
+     * 请求的webService接口方法的参数
+     */
+    public static final String METHODPARAMETER = "params";
+    /**
+     * 操作信息
+     */
+    public static final String OPERATE = "operate";
 
     /**
      * POST方式调用公安接口
@@ -59,8 +83,8 @@ public class HttpUtils {
         } catch (MalformedURLException e) {
             logger.info("[0214 POST接口调用出错],接口入参: {}, 接口URL: {}, 原因: {}", jsonObject.toJSONString(), url, e);
         } catch (IOException e) {
-            logger.info("[0214 POST接口调用出错],接口入参: {}, 接口URL: {}", jsonObject.toJSONString(), url);
-            throw new HttpNetWorkException("[0214 POST接口调用出错],接口入参: " + jsonObject.toJSONString() + ", 接口URL: " + url + ", 错误原因: " + e);
+            logger.info("[0214 POST接口调用出错],接口入参: {}, 接口URL: {}, 原因: {}", jsonObject.toJSONString(), url, e);
+            throw new HttpNetWorkException("[0214 POST接口调用出错],接口入参: " + jsonObject.toJSONString() + ", 接口URL: " + url);
         } finally {
             if (in != null) {
                 try {
@@ -93,20 +117,20 @@ public class HttpUtils {
      * @param url             总线节点路径
      * @return
      */
-    public static String post(String senderId,
-                              String serviceId,
-                              String method,
-                              String authorizeInfo,
-                              String operate,
-                              Object methodParameter,
-                              String url) throws IOException {
+    public static String post(String serviceId,
+                       String senderId,
+                       String method,
+                       String authorizeInfo,
+                       String operate,
+                       JSONObject methodParameter,
+                       String url) throws Exception {
         JSONObject jObject = new JSONObject();
-        jObject.put(PropertyUtils.get("SENDER_ID"), senderId);
-        jObject.put(PropertyUtils.get("SERVICE_ID"), serviceId);
-        jObject.put(PropertyUtils.get("AUTHORIZE_INFO"), authorizeInfo);
-        jObject.put(PropertyUtils.get("METHOD"), method);
-        jObject.put(PropertyUtils.get("METHODPARAMETER"), methodParameter);
-        jObject.put(PropertyUtils.get("OPERATE"), operate);
+        jObject.put(SERVICE_ID, serviceId);
+        jObject.put(SENDER_ID, senderId);
+        jObject.put(AUTHORIZE_INFO, authorizeInfo);
+        jObject.put(METHOD, method);
+        jObject.put(METHODPARAMETER, methodParameter);
+        jObject.put(OPERATE, operate);
         return post(jObject, url);
     }
 

@@ -21,4 +21,10 @@ public class EchartUtilsTest {
         jsonObject.put("data", result);
         System.out.println(jsonObject.toJSONString());
     }
+
+    @Test
+    public void testValidate() {
+        String idCard = "511621199501157758";
+        System.out.println(ValidateUtils.isIdCard(idCard));
+    }
 }

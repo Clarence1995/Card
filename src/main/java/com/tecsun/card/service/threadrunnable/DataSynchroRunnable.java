@@ -73,6 +73,10 @@ public class DataSynchroRunnable implements Runnable {
      * 是否需要和公安接口人员信息是否进行比对
      */
     private boolean eCompareWithGongAnDatabase;
+    /**
+     * 是否需要标记人员为优先
+     */
+    private boolean eMarkPriority;
     private boolean getImgFromFile;
 
     private final String LOG_NAME         = "人员同步日志记录";
@@ -136,6 +140,7 @@ public class DataSynchroRunnable implements Runnable {
      * @param eCompareWithGongAnDatabase   是否需要和公安接口进行人员信息比对
      * @param eDeleteAC01User              是否需要删除AC01人员表(这个是处理异常人员数据的。先把AC01人员删除掉,再从采集库里面同步到卡管库)
      * @param eCopyImgFromHadDeal          是否需要复制数据中心处理过的照片(因为做同步的时候,可能只需要把采集库的人员信息导入到卡管库,但是人员图片可能已经存在了)
+     * @param eMarkPriority                是否需要标记人员为优先
      * @param imgFilePath                  如果需要复制照片,则需要传递照片根路径
      */
     public DataSynchroRunnable(DataHandleService dataHandleService,
@@ -147,6 +152,7 @@ public class DataSynchroRunnable implements Runnable {
                                Boolean eCompareWithGongAnDatabase,
                                Boolean eDeleteAC01User,
                                Boolean eCopyImgFromHadDeal,
+                               Boolean eMarkPriority,
                                String imgFilePath) {
         this.dataHandleService = dataHandleService;
         this.idCardList = idCardList;
@@ -157,6 +163,7 @@ public class DataSynchroRunnable implements Runnable {
         this.eCompareWithGongAnDatabase = eCompareWithGongAnDatabase;
         this.eDeleteAC01User = eDeleteAC01User;
         this.eCopyImgFromHadDeal = eCopyImgFromHadDeal;
+        this.eMarkPriority = eMarkPriority;
         this.imgFilePath = imgFilePath;
     }
 
@@ -201,6 +208,7 @@ public class DataSynchroRunnable implements Runnable {
                                 eCompareWithGongAnDatabase,
                                 eDeleteAC01User,
                                 eCopyImgFromHadDeal,
+                                eMarkPriority,
                                 imgFilePath);
                 if (Constants.FAIL_RESULT_CODE == result.getStateCode()) {
                     errorLogList.add(result.getMsg());

@@ -1,5 +1,6 @@
 package com.tecsun.card.entity.vo;
 
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,6 +11,7 @@ import lombok.Setter;
  */
 @Getter
 @Setter
+@EqualsAndHashCode
 public class GongAnInfoVO {
     /**
      * 姓名
@@ -26,7 +28,7 @@ public class GongAnInfoVO {
     /**
      * 民族
      */
-    private Integer MZ;
+    private String MZ;
     /**
      * 出生日期
      */

@@ -13,4 +13,6 @@ public interface SystemService {
     Result getControllerURL() throws NoSuchMethodException, IllegalAccessException, InvocationTargetException;
 
     Result getDatabaseDetail(String userName);
+
+    boolean judgeReigonalCodeExit(String regionalCode);
 }

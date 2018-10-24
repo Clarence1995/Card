@@ -16,7 +16,7 @@
         EXPRESS_ADDRESS,
         GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,
         hkbNo,hkType,hkProperty,
-        isExpress,
+        isExpress,isBaby
         mobile,
         name,nation,
         PARMANENTADDRESS AS parmanentAddress,PARMANENTZIPCODE AS parmanentZipCode,PARMANENTADDRESSCODE AS

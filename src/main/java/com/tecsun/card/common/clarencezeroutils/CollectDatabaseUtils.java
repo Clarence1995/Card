@@ -6,6 +6,7 @@ import com.tecsun.card.entity.po.BasicPersonInfo;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Date;
 
@@ -50,7 +51,7 @@ public class CollectDatabaseUtils {
             validateResult = false;
             dealMsg.append(" 姓名为空");
         }
-        if (StringUtils.isBlank(basicBean.getSex())) {
+        if (!ObjectUtils.notEmpty(basicBean.getSex())) {
             validateResult = false;
             dealMsg.append(" 性别为空");
         }
@@ -166,5 +167,6 @@ public class CollectDatabaseUtils {
             return false;
         }
     }
+
 
 }

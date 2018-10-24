@@ -78,4 +78,14 @@ public class SystemServiceImpl implements SystemService {
         result.setData(JSONResult);
         return result;
     }
+
+    @Override
+    public boolean judgeReigonalCodeExit(String regionalCode) {
+        int result = pubDao.countRegionalCode(regionalCode);
+        if (result > 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 }

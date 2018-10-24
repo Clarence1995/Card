@@ -258,7 +258,7 @@ public class CollectToCardSynchroThreadTask implements Runnable {
 
                 // 5、数据库同步
                 try {
-                    cardService.assembleAC01(ac01PO, basicPersonInfo);
+                    cardService.assembleAC01(ac01PO, basicPersonInfo, false);
                 } catch (Exception e) {
 
                 }

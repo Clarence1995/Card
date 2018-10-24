@@ -219,7 +219,7 @@ public class CollectServiceImpl implements CollectService {
             validateResult = false;
             dealMsg.append(",姓名为空");
         }
-        if (StringUtils.isBlank(basicBean.getSex())) {
+        if (!ObjectUtils.notEmpty(basicBean.getSex())) {
             validateResult = false;
             dealMsg.append(",性别为空,");
         }

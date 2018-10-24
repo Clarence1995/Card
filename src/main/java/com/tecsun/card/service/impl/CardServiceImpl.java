@@ -344,7 +344,7 @@ public class CardServiceImpl implements CardService {
      * @updateTime
      */
     @Override
-    public void assembleAC01(Ac01PO ac01, BasicPersonInfo bean) throws Exception {
+    public void assembleAC01(Ac01PO ac01, BasicPersonInfo bean, boolean ePriority) throws Exception {
         // 个人编号
         ac01.setAac001(this.generateAC01IUserNumber());
         // 单位编号
@@ -433,7 +433,11 @@ public class CardServiceImpl implements CardService {
         // EMAIL
         ac01.setEmail("");
         // 标记状态 0 正常
-        ac01.setMarkStatus(Constants.USER_MARK_STATUS_NORMAL);
+        if (ePriority) {
+            ac01.setMarkStatus(Constants.USER_MARK_STATUS_PRIORITY);
+        } else {
+            ac01.setMarkStatus(Constants.USER_MARK_STATUS_NORMAL);
+        }
         // 照片路径
         ac01.setPhotourl(bean.getPhotoUrl());
         // 人员状态 00 初始

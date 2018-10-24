@@ -2,6 +2,7 @@ package com.tecsun.card.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.tecsun.card.common.ThreadPoolUtil;
 import com.tecsun.card.common.clarencezeroutils.*;
 import com.tecsun.card.common.excel.ExcelDataFormatter;
@@ -71,6 +72,8 @@ public class DataHandleServiceImpl implements DataHandleService {
     private CollectService  collectService;
     @Autowired
     private DongRuanService dongRuanService;
+    @Autowired
+    private SystemService systemService;
 
     /**
      * @return com.tecsun.card.entity.Result
@@ -385,17 +388,21 @@ public class DataHandleServiceImpl implements DataHandleService {
         }
     }
 
+    public static void main(String[] args) {
+        String baby = "1";
+        System.out.println(false ? "1":"1");
+    }
     /**
      * 单个人员数据同步同步
      *
-     * @param idCard                             身份证号码
-     * @param imgFilePath                        照片路径文件夹
-     * @param eCopyImgFromHadDeal                是否需要复制数据中心处理过的照片到113指定文件夹内
-     * @param egetImgFromDatabase                是否需要从本地数据库获取公安照片
-     * @param eValidateUserInfo                  是否需要校验人员基本信息
-     * @param eGetCollectDataFromFourty 是否需要从70获取采集人员信息
-     * @param eCompareWithGongAnDatabase         是否需要和公安对比人员信息
-     * @param eDeleteAC01User                    是否需要删除113AC01人员数据
+     * @param idCard                     身份证号码
+     * @param imgFilePath                照片路径文件夹
+     * @param eCopyImgFromHadDeal        是否需要复制数据中心处理过的照片到113指定文件夹内
+     * @param egetImgFromDatabase        是否需要从本地数据库获取公安照片
+     * @param eValidateUserInfo          是否需要校验人员基本信息
+     * @param eGetCollectDataFromFourty  是否需要从70获取采集人员信息
+     * @param eCompareWithGongAnDatabase 是否需要和公安对比人员信息
+     * @param eDeleteAC01User            是否需要删除113AC01人员数据
      * @return
      */
     @Override
@@ -406,6 +413,7 @@ public class DataHandleServiceImpl implements DataHandleService {
                                        Boolean eCompareWithGongAnDatabase,
                                        Boolean eDeleteAC01User,
                                        Boolean eCopyImgFromHadDeal,
+                                       Boolean eMarkPriority,
                                        String imgFilePath
     ) {
         // 1、不为空判断
@@ -520,7 +528,7 @@ public class DataHandleServiceImpl implements DataHandleService {
         }
 
 
-        // 5、基本信息校验
+        // 5、---------------------------------- ~ 基本信息校验 START ----------------------------------
         Ac01PO ac01PO = new Ac01PO();
         ac01PO.setAac147(idCard);
         if (eValidateUserInfo) {
@@ -573,17 +581,28 @@ public class DataHandleServiceImpl implements DataHandleService {
                 }
             }
 
+        } else {
+            boolean checkRegionalCode = CollectDatabaseUtils.checkRegionalcode(ac01PO);
         }
+        // 5、---------------------------------- ~ 基本信息校验 END ----------------------------------
 
         // 6、公安信息比对
         if (eCompareWithGongAnDatabase) {
             try {
-                GongAnInfoVO gongAnInfoVO = this.getUserInfoFromGongAnByIdCard(idCard);
-            } catch (IOException e) {
-                logger.error("[ERROR 0214 采集同步] 公安信息获取异常");
-                // 如果发生公安接口异常,则返回 777 状态码,并把剩下的人员输出到TXT文件当中,做日志记录
-                myResult.setStateCode(Constants.GONG_AN_EXCEPTION_RESULT_CODE);
-                myResult.setMsg(idCard + "_公安接口发生异常,接下来的人员不进行同步,并写入日志");
+                Result compareWithGongAnResult = compareWithGongAnUserInfo(basicPersonInfo);
+                if (Constants.FAIL_RESULT_CODE == compareWithGongAnResult.getStateCode()) {
+                    myResult.setStateCode(Constants.FAIL_RESULT_CODE);
+                    myResult.setMsg(idCard + "_公安信息比对不过:" + compareWithGongAnResult.getMsg());
+                    return myResult;
+                }
+            } catch (Exception e) {
+                logger.error("[0214 采集同步] 与公安信息对比发生异常。原因: {}", e);
+                myResult.setStateCode(Constants.EXCEPTION_RESULT_CODE);
+                if (null != e.getMessage()) {
+                    myResult.setMsg(idCard + "_与公安信息对比发生异常" + e.getMessage());
+                } else {
+                    myResult.setMsg(idCard + "_与公安信息对比发生异常");
+                }
                 return myResult;
             }
         }
@@ -593,13 +612,32 @@ public class DataHandleServiceImpl implements DataHandleService {
         String databaseImgPath = File.separator + ac01PO.getAac301() + File.separator + idCard + ".jpg";
         basicPersonInfo.setPhotoUrl(databaseImgPath);
         // 7-2、源路径
-        StringBuilder imgSrcPath = new StringBuilder(imgFilePath + Constants.SEPARATOR);
+        StringBuilder imgSrcPath = null;
         // 7-3、目标路径
         StringBuilder imgDisPath = new StringBuilder(Constants.IMG_113_FILE_ROOT_PATH);
         imgDisPath.append(Constants.SEPARATOR + ac01PO.getAac301() + Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX);
         if (eCopyImgFromHadDeal) {
-            // 需要复制数据中心处理过的照片
-            imgSrcPath.append(ac01PO.getAac147() + Constants.IMG_SUFFIX);
+            // 7-3-1、判断是否为婴儿照片
+            boolean eBabyCard = false;
+            if (null != basicPersonInfo.getIsBaby()) {
+                String eBaby = basicPersonInfo.getIsBaby();
+                if (Constants.COLLECT_IS_BABY.equals(eBaby)) {
+                    eBabyCard = true;
+                } else {
+                    eBabyCard = false;
+                }
+            } else {
+                eBabyCard = HandleCollectDateUtils.eBabyCard(basicPersonInfo.getBirthday());
+            }
+
+            if (eBabyCard) {
+                // 就把照片复制到默认文件夹
+                imgSrcPath = new StringBuilder(PropertyUtils.get("BABAY_IMG_PATH"));
+            } else {
+                imgSrcPath = new StringBuilder(imgFilePath + Constants.SEPARATOR);
+                // 需要复制数据中心处理过的照片
+                imgSrcPath.append(ac01PO.getAac147() + Constants.IMG_SUFFIX);
+            }
             if (!new File(imgSrcPath.toString()).exists()) {
                 logger.error("[0214 采集同步] 人员: {}, 待复制的数据中心处理过的照片不存在: {}", idCard, imgSrcPath.toString());
                 myResult.setStateCode(Constants.FAIL_RESULT_CODE);
@@ -614,6 +652,7 @@ public class DataHandleServiceImpl implements DataHandleService {
                 logger.info("[0214 采集同步] 人员: {} 照片 (来源于指定文件夹)复制成功, 目标路径为: {} ", idCard, imgDisPath.toString());
             }
         }
+
         // 7-4、从本地数据库获取公安照片
         if (egetImgFromDatabase) {
             // 是否从数据库中获取照片
@@ -664,7 +703,7 @@ public class DataHandleServiceImpl implements DataHandleService {
         // 9、同步
         try {
             // 9-1、人员信息组装
-            cardService.assembleAC01(ac01PO, basicPersonInfo);
+            cardService.assembleAC01(ac01PO, basicPersonInfo, eMarkPriority);
         } catch (Exception e) {
             logger.error("[0214 采集同步: 数据组装出错], 原因: {}", e);
             myResult.setStateCode(Constants.FAIL_RESULT_CODE);
@@ -696,125 +735,6 @@ public class DataHandleServiceImpl implements DataHandleService {
             }
             return myResult;
         }
-        //     String codeForImg = ac01PO.getAac301();
-        //     // 照片存放路径
-        //     StringBuilder imgFilePath = new StringBuilder(Constants.IMG_113_FILE_ROOT_PATH);
-        //     imgFilePath.append(Constants.SEPARATOR + ac01PO.getAac301() + Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX);
-        //     // 数据库字段所需要的路径
-        //     String databaseImgPath = File.separator + codeForImg + File.separator + idCard + ".jpg";
-        //     basicPersonInfo.setPhotoUrl(databaseImgPath);
-        //     if (ecopyImg) {
-        //         if (eGetImgFromDatabase) {
-        //             // 是否从数据库中获取照片
-        //             // 照片[中间库10.24.250.20]
-        //             MidImgDAO midImgDAO = midService.getImgFromGONGAN(idCard);
-        //             if (null == midImgDAO && midImgDAO.getXp().length == 0) {
-        //                 // ②如果为空,则查询表 COLLECT_PHOTO
-        //                 midImgDAO = midService.getImgFromGAT12(idCard);
-        //                 if (null == midImgDAO && midImgDAO.getXp().length == 0) {
-        //                     // ③如果为空,则查询表 GAT12
-        //                     midImgDAO = midService.getImgFromCOLLECTPHOTO(idCard);
-        //                     if (null == midImgDAO && midImgDAO.getXp().length == 0) {
-        //                         logger.info("[0214 采集同步] 人员:" + idCard + "数据库不存在此人公安照片");
-        //                         // 是否需要记录状态
-        //                         updateCollectStatusBean.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
-        //                         updateCollectStatusBean.setDealStaus(Constants.COLLECT_IMG_ERROR);
-        //                         updateCollectStatusBean.setDealMsg("不存在公安照片");
-        //                         failSb.append("_数据库不存在公安照片");
-        //                         errorList.add(failSb.toString());
-        //                         try {
-        //                             collectService.updateUserInfoStatusByIdCardAndName(updateCollectStatusBean);
-        //                         } catch (Exception e) {
-        //                             e.printStackTrace();
-        //                         }
-        //                         continue;
-        //                     }
-        //                 }
-        //             }
-        //             // 写入指定文件夹
-        //             byte[] bytes = midImgDAO.getXp();
-        //             try {
-        //                 FileUtils.writeByteArrayToFile(new File(imgFilePath.toString()), bytes);
-        //             } catch (IOException e) {
-        //                 e.printStackTrace();
-        //             }
-        //         }
-        //         // 从文件夹获取人员照片
-        //         if (getImgFromFile) {
-        //             if (ObjectUtils.isEmpty(imgFilePath)) {
-        //                 throw new NullPointerException("[0214 采集同步] imgpath 不能为空");
-        //             }
-        //             // String srcImgPath = imgFilePath + Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX;
-        //             String disImgPath = imgFilePath.toString();
-        //             if (!new File(tsbImgPath.toString()).exists()) {
-        //                 logger.error("[0214 采集同步] 人员: {}, 照片路径不存在: {}", idCard, disImgPath);
-        //                 failSb.append("_图片路径不存在");
-        //                 continue;
-        //             } else {
-        //                 try {
-        //                     FileUtils.copyFile(new File(tsbImgPath.toString()), new File(disImgPath));
-        //                 } catch (IOException e) {
-        //                     e.printStackTrace();
-        //                 }
-        //                 logger.info("[0214 采集同步] 人员: {} 照片 (源于指定文件夹)复制成功, 目标路径为: {} ", idCard, disImgPath);
-        //             }
-        //
-        //         }
-        //     }
-        //     // 4、藏文
-        //     String zangName = collectService.getZangNameByIdCard(idCard);
-        //     if (ObjectUtils.notEmpty(zangName)) {
-        //         basicPersonInfo.setZangName(zangName);
-        //     } else {
-        //         basicPersonInfo.setZangName(Constants.ZANG_NAME_NOT_EXIST);
-        //     }
-        //
-        //     // 5、同步到卡管库
-        //     try {
-        //         cardService.assembleAC01(ac01PO, basicPersonInfo);
-        //     } catch (Exception e) {
-        //         logger.error("[0214 采集同步: 数据组装出错], 原因: {}", e);
-        //         failSb.append("_数组组装出错:" + e);
-        //         errorList.add(failSb.toString());
-        //         continue;
-        //     }
-        //     basicPersonInfo.setRegionalCode(ac01PO.getAac301());
-        //     // △ 数据库同步
-        //     boolean synchroBean = cardService.insertCardAC01AndBusApplyFromCollect(ac01PO, basicPersonInfo);
-        //     if (synchroBean) {
-        //         logger.info("[0214 采集同步] 人员: {} 已正常同步完成", idCard);
-        //         successSb.append("_采集人员同步完成");
-        //     } else {
-        //         logger.info("[0214 采集同步] 人员: {} 同步失败", idCard);
-        //         failSb.append("_数据库同步失败");
-        //         errorList.add(failSb.toString());
-        //         continue;
-        //     }
-        //     successList.add(successSb.toString());
-        // }
-        //
-        //     try
-        //
-        // {
-        //     // 日志文件路径
-        //     successList.add("处理总人数： " + totalNum + "。成功人数：" + successList.size() + ";失败人数： " + errorList.size());
-        //     errorList.add("处理总人数： " + totalNum + "。成功人数：" + (successList.size() - 1) + ";失败人数： " + errorList.size());
-        //     StringBuilder logFilePath = new StringBuilder(logPath);
-        //     logFilePath.append(Constants.SEPARATOR + LOG_NAME + DateUtils.getNowYMDHM() + SUCCESS_LOG_NAME + Constants.TXT_SUFFIX);
-        //     TxtUtil.writeTxt(new File(logFilePath.toString()), "UTF-8", successList);
-        //
-        //     logFilePath.replace(logFilePath.toString().lastIndexOf("\\") + 1,
-        //             logFilePath.toString().length(), LOG_NAME + DateUtils.getNowYMDHM() + FAIL_LOG_NAME + Constants.TXT_SUFFIX);
-        //     TxtUtil.writeTxt(new File(logFilePath.toString()), "UTF-8", errorList);
-        //     logger.info("[0214 采集同步 完成] ~----------当前线程: {}, 处理总人数: {}, 成功人数: {}, 失败人数: {}-----------------------", Thread.currentThread().getName(), totalNum, successList.size(), errorList.size());
-        // } catch(
-        // IOException e)
-        //
-        // {
-        //     logger.error("[0214 采集同步] 文件复制出错：{}", e);
-        // }
-        //
-        //     return null;
     }
 
 
@@ -1176,7 +1096,12 @@ public class DataHandleServiceImpl implements DataHandleService {
 
     @Override
     public Boolean checkCollectUserInfo(BasicPersonInfo userinfo) {
-
+        GongAnInfoVO collectUserInfo = new GongAnInfoVO();
+        collectUserInfo.setXM(userinfo.getName());
+        collectUserInfo.setSFZH(userinfo.getCertNum());
+        collectUserInfo.setXB(userinfo.getSex());
+        collectUserInfo.setMZ(userinfo.getNation());
+        // collectUserInfo.setCSRQ(userinfo.getBirthday());
         return null;
     }
 
@@ -1187,7 +1112,7 @@ public class DataHandleServiceImpl implements DataHandleService {
      * @return
      */
     @Override
-    public GongAnInfoVO getUserInfoFromGongAnByIdCard(String idCard) throws IOException {
+    public GongAnInfoVO getUserInfoFromGongAnByIdCard(String idCard) throws Exception {
         if (null == idCard) {
             throw new NullPointerException("[0214 通过公安接口获取用户信息异常: 身份证不能为空,不允许查询");
         }
@@ -1198,27 +1123,26 @@ public class DataHandleServiceImpl implements DataHandleService {
         String method           = "Query";
         String authorizeInfo    = PropertyUtils.get("SENDER_AUTHORIZE");
 
-        // 2、组装操作人员基本信息
-        JSONObject gongAnOperate = new JSONObject();
-        gongAnOperate.put("userId", "540000");
-        gongAnOperate.put("userName", "西藏自治区");
-        gongAnOperate.put("userDept", "540000");
-        gongAnOperate.put("macIp", "192.168.12.185");
+        // 3-1、组装操作人员基本信息
+        JSONObject operate = new JSONObject();
+        operate.put("userId", "540000");
+        operate.put("userName", "西藏自治区");
+        operate.put("userDept", "540000");
+        operate.put("macIp", "192.168.12.185");
 
-        // 3、组装params
-        // 3-1、组装endUser
+        // 3-2、组装endUser
         JSONObject endUser = new JSONObject();
         endUser.put("UserCardId", "540000");
         endUser.put("UserName", "西藏自治区");
         endUser.put("UserDept", "540000");
 
-        // 3-2、组装params(这里可以添加SQL的参数,如Condition: "XM= 'xx'
+        // 3-3、组装params(这里可以添加SQL的参数,如Condition: "XM= 'xx'
         JSONObject methodParameter = new JSONObject();
         methodParameter.put("EndUser", endUser);
         methodParameter.put("Method", "Query");
         methodParameter.put("Condition", "SFZH='" + idCard + "'");
         methodParameter.put("OrderItems", "");
-        //姓名，性别，民族，出生日期，证件号，证件有效期
+        // XM:姓名，XB:性别，MZ:民族，CSRQ:出生日期,SFZH:身份证号码，证件有效期,户口所在地:HKSZD,
         methodParameter.put("RequiredItems", "XM,SFZH,BDYY,BYQK,CSD,CSDGJ,CSDXZ,CSRQ,CYM,"
                 + "FWCS,HDQR,HKSZD,HYZK,JGGJ,JGSSX,MZ,QTZZSSXQ,QTZZXZ,SG,WHCD,XB,ZY,"
                 + "ZZSSXQ,ZZXZ");
@@ -1228,9 +1152,12 @@ public class DataHandleServiceImpl implements DataHandleService {
         methodParameter.put("SourceDataSet", "");
 
         logger.info("[0214 从公安库获取用户信息] 调用公安接口 START ~~~ 。当前时间: {}", DateUtils.getNowYMDHMSWithCHN());
+        logger.info("[0214 调用公安接口入参]: serviceId: {}, senderId:{}, method:{}, authorizeInfo:{}, operate: {}, methodParameter: {},GongAn_URL: {}",
+                serviceId, senderId, method, authorizeInfo, JSONObject.toJSONString(operate), JSONObject.toJSONString(methodParameter), GONG_AN_ROOT_URL);
         try {
-            String gongAnResult = HttpUtils.post(serviceId, senderId, method, authorizeInfo, gongAnOperate.toString(), methodParameter, GONG_AN_ROOT_URL);
-            logger.info("[0214 从公安库获取用户信息] 调用公安接口成功 END。正在解析数据");
+            String gongAnResult = HttpUtils.post(serviceId, senderId, method, authorizeInfo, operate.toString(), methodParameter, GONG_AN_ROOT_URL);
+            logger.info("[0214 公安数据返回:{}", JSONObject.toJSONString(gongAnResult));
+            logger.info("[0214 从公安库获取用户信息] 调用公安接口成功。正在解析数据");
             GongAnInfoVO resultBean = new GongAnInfoVO();
             JSONObject   jsonObject = JSONObject.parseObject(gongAnResult);
             JSONObject   payLoad    = jsonObject.getJSONObject("payLoad");
@@ -1240,15 +1167,16 @@ public class DataHandleServiceImpl implements DataHandleService {
                     JSONObject user = result.getJSONObject(0);
                     resultBean.setXM(user.getString("XM"));
                     resultBean.setCSRQ(Long.valueOf(user.getString("CSRQ")));
-                    resultBean.setMZ(Integer.valueOf(user.getString("MZ")));
+                    resultBean.setMZ(user.getString("MZ"));
                     resultBean.setXB(Integer.valueOf(user.getString("XB")));
                     resultBean.setHKSZD(user.getString("HKSZD"));
                     resultBean.setSFZH(user.getString("SFZH"));
+
                     logger.info("[0214 从公安库获取用户信息] 用户信息解析成功。用户详情{}", JSONObject.toJSONString(resultBean));
                     return resultBean;
                 }
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             logger.error("[0214 从公安库获取用户信息] 调用公安接口异常");
             throw e;
         }
@@ -1262,14 +1190,130 @@ public class DataHandleServiceImpl implements DataHandleService {
      * @return
      */
     @Override
-    public Boolean compareWithGongAnUserInfo(BasicPersonInfo userInfo) throws Exception {
+    public Result compareWithGongAnUserInfo(BasicPersonInfo userInfo) throws Exception {
         // 1、获取用户身份证号码
-        String certNum = userInfo.getCertNum();
+        boolean       compareResult = true;
+        String        certNum       = userInfo.getCertNum();
+        StringBuilder resultSb      = new StringBuilder();
+        Result        result        = new Result();
         if (null == certNum) {
             throw new NullPointerException("[0214 公安数据比对] 待对比用户身份证号不能为空");
         }
         GongAnInfoVO gongAnInfo = getUserInfoFromGongAnByIdCard(userInfo.getCertNum());
-        return null;
+        if (null == gongAnInfo) {
+            throw new NullPointerException("公安数据库获取不到此人信息");
+        }
+
+        if (!gongAnInfo.getXM().equals(userInfo.getName())) {
+            resultSb.append(" 姓名对比不过");
+            compareResult = false;
+        }
+        if (!gongAnInfo.getMZ().equals(userInfo.getNation())) {
+            resultSb.append(" 民族比对不过");
+            compareResult = false;
+        }
+        if (!gongAnInfo.getXB().equals(userInfo.getSex())) {
+            resultSb.append("性别比对不过");
+            compareResult = false;
+        }
+        if (!gongAnInfo.getCSRQ().equals(userInfo.getBirthday())) {
+            resultSb.append("出生日期比对不过");
+            compareResult = false;
+        }
+        if (compareResult) {
+            result.setStateCode(Constants.SUCCESS_RESULT_CODE);
+            result.setMsg("公安比对成功");
+            return result;
+        } else {
+            result.setStateCode(Constants.FAIL_RESULT_CODE);
+            result.setMsg(resultSb.toString());
+            return result;
+        }
+    }
+
+    /**
+     * 批量获取西藏公民身份信息(批量只适用于西藏公民)
+     *
+     * @param idCardList
+     * @return
+     * @throws Exception
+     */
+    @Override
+    public List<GongAnInfoVO> getUserInfoFromGongAnByIdCardList(List<GongAnInfoVO> userInfoList) throws Exception {
+        String GONG_AN_ROOT_URL = PropertyUtils.get("GONG_AN_ROOT_URL");
+        String serviceId        = PropertyUtils.get("SERVICE_ID_01");
+        // 批量
+        String senderId      = PropertyUtils.get("SERVICE_ID_08");
+        String method        = "DataMatching";//调用的方法（固定参数）
+        String authorizeInfo = PropertyUtils.get("SENDER_AUTHORIZE");
+        // 1、
+        JSONObject endUser = new JSONObject();
+        endUser.put("UserCardId", "540000");
+        endUser.put("UserName", "西藏自治区");
+        endUser.put("UserDept", "540000");
+        // 2、
+        JSONObject methodParameter = new JSONObject();
+        // 用户信息
+        methodParameter.put("EndUser", endUser);
+        // 调用的方法（固定参数）
+        methodParameter.put("Method", method);
+        // 查询条件（标准sql）
+        methodParameter.put("Condition", "GMSFHM='GMSFHM'");
+        // 请求字段(多个，隔开)
+        methodParameter.put("RequiredItems", "XM,GMSFHM,CSRQ,MZ,XB,HKSZD");
+        // 交换服务方
+        methodParameter.put("ReceiveServiceID", "");
+
+        // 3、
+        JSONObject operate = new JSONObject();
+        operate.put("userId", "540000");
+        operate.put("userName", "西藏自治区");
+        operate.put("userDept", "540000");
+        operate.put("macIp", "192.168.12.185");
+        JSONArray jssonArray = new JSONArray();
+
+        for (GongAnInfoVO user : userInfoList) {
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("GMSFHM", user.getSFZH());
+            jsonObject.put("MX", user.getXM());
+            jssonArray.add(jsonObject);
+        }
+        methodParameter.put("SourceDataSet", jssonArray);//比对数据集
+        // 表码翻译模式（0:代码；1:名称；2:代码/名称）
+        methodParameter.put("InfoCodeMode", "0");
+
+        logger.info("[0214 从公安库获取用户信息] 调用公安接口 START ~~~ 。当前时间: {}", DateUtils.getNowYMDHMSWithCHN());
+        logger.info("[0214 调用公安接口入参]: serviceId: {}, senderId:{}, method:{}, authorizeInfo:{}, operate: {}, methodParameter: {},GongAn_URL: {}",
+                serviceId, senderId, method, authorizeInfo, JSONObject.toJSONString(operate), JSONObject.toJSONString(methodParameter), GONG_AN_ROOT_URL);
+        String res = HttpUtils.post(serviceId,
+                senderId, method, authorizeInfo, operate.toString(), methodParameter, GONG_AN_ROOT_URL);
+        logger.info("[0214 公安接口返回数据成功。{}", res);
+
+        JSONObject         jObject        = JSONObject.parseObject(res);
+        JSONObject         payLoad        = jObject.getJSONObject("payLoad");
+        List<GongAnInfoVO> resultBeanList = new ArrayList<>(userInfoList.size());
+        if (Constants.GONGAN_SUCCESS_RESULT.equals(jObject.getJSONObject("Code"))) {
+            JSONObject json = payLoad.getJSONObject("Message");
+            if (Integer.parseInt(json.getString("TotalNum")) > 0) {
+                JSONArray dataSet = json.getJSONArray("Reuoult");
+                for (Object o : dataSet) {
+                    JSONObject   data         = (JSONObject) o;
+                    String       xm           = data.getString("MX");
+                    String       sfzh         = data.getString("GMSFHM");
+                    String       mz           = data.getString("MZ");
+                    String       xb           = data.getString("XB");
+                    String       hkszd        = data.getString("HKSZD");
+                    GongAnInfoVO gongAnInfoVO = new GongAnInfoVO();
+                    gongAnInfoVO.setXM(xm);
+                    gongAnInfoVO.setXB(Integer.valueOf(xb));
+                    gongAnInfoVO.setSFZH(sfzh);
+                    gongAnInfoVO.setMZ(mz);
+                    gongAnInfoVO.setHKSZD(hkszd);
+                    resultBeanList.add(gongAnInfoVO);
+                }
+            }
+        }
+        return resultBeanList;
     }
 
 

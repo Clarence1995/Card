@@ -63,7 +63,7 @@ public class BasicPersonInfo {
     /**
      * 性别
      */
-    private String sex;
+    private Integer sex;
     private String regionalCode;
 
 

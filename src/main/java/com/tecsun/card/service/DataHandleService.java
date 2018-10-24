@@ -36,6 +36,7 @@ public interface DataHandleService {
      * @param: eValidateUserInfo               是否校验人员基础信息
      * @param: eGetCollectDataFromFourty       是否需要从40采集库获取人员基本信息
      * @param: eCompareWithGongAnDatabase      是否需要和公安库进行比对
+     * @param: eMarkPriority                   是否需要将人员状态标记为优先
      * @param: eDeleteAC01User                 是否需要删除AC01表(用于人员异常信息再同步)
      * @author 0214
      * @createTime 2018-10-11 11:20
@@ -48,6 +49,7 @@ public interface DataHandleService {
                                        Boolean eCompareWithGongAnDatabase,
                                        Boolean eDeleteAC01User,
                                        Boolean eCopyImgFromHadDeal,
+                                       Boolean eMarkPriority,
                                        String imgFilePath
     );
 
@@ -115,14 +117,15 @@ public interface DataHandleService {
      * @param idCard
      * @return
      */
-    GongAnInfoVO getUserInfoFromGongAnByIdCard(String idCard) throws IOException;
+    GongAnInfoVO getUserInfoFromGongAnByIdCard(String idCard) throws Exception;
 
     /**
      * 和公安数据库进行比对
      * @param userInfo
      * @return
      */
-    Boolean compareWithGongAnUserInfo(BasicPersonInfo userInfo) throws Exception
-    ;
+    Result compareWithGongAnUserInfo(BasicPersonInfo userInfo) throws Exception;
+
+    List<GongAnInfoVO> getUserInfoFromGongAnByIdCardList(List<GongAnInfoVO> userInfoList) throws Exception;
 
 }

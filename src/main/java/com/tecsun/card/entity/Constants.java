@@ -65,7 +65,7 @@ public class Constants {
     public static final String OUTER_CODE_REGIONAL = "549900";
 
 
-    // 婴儿卡
+    // 婴儿卡 0:婴儿卡/1:非婴儿卡
     public static final String COLLECT_IS_BABY  = "0";
     public static final String COLLECT_NOT_BABY = "1";
     public static final Long   BABY_TIME        = 189216000000L;
@@ -285,6 +285,9 @@ public class Constants {
 
     // 超级管理员用户名
     public static final String ADMIN = "admin";
+
+    // 公安接口返回
+    public static final String GONGAN_SUCCESS_RESULT = "000";
 
 
     // ~ HashMap --------------------------------------------------------

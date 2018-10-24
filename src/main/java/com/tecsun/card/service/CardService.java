@@ -159,7 +159,7 @@ public interface CardService {
      * @createTime 2018-09-20 13:07
      * @updateTime
      */
-    void assembleAC01(Ac01PO ac01PO, BasicPersonInfo bean) throws Exception;
+    void assembleAC01(Ac01PO ac01PO, BasicPersonInfo bean, boolean ePriority) throws Exception;
 
 
     int updateAC01Status(Ac01DAO acstatusBean);
