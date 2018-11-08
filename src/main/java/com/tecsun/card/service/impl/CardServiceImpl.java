@@ -181,6 +181,16 @@ public class CardServiceImpl implements CardService {
         return cardDao.getAC01DetailByRegeionalCodeAndStatus(regionalCode, userStatus);
     }
 
+    /**
+     * 获取指定数据的序列
+     * @param count
+     * @return
+     */
+    @Override
+    public List<Long> getAC01SequenceBatch(int count) {
+        return cardDao.getAC01SequenceBatch(count);
+    }
+
 
     // ~ UPDATE ------------------------------------------------
 
@@ -347,6 +357,27 @@ public class CardServiceImpl implements CardService {
         List<BasicInfoBean> excelBeanList = new ExcelUtil<BasicInfoBean>(new BasicInfoBean()).readFromFile(null, new File(filePath), null);
         // 2、循环遍历,判断
         return null;
+    }
+
+
+    /**
+     * 批量插入申领表
+     * @param userList
+     * @return
+     */
+    @Override
+    public int insertAc01Batch(List<Ac01PO> userList) {
+        return cardDao.insertUserBatch(userList);
+    }
+
+    /**
+     * 批量插入新申领表
+     * @param busApplyList
+     * @return
+     */
+    @Override
+    public int insertBusApplyBatch(List<BusApplyPO> busApplyList) {
+        return cardDao.insertBusApplyBatch(busApplyList);
     }
 
     // ~ ELSE ------------------------------------------------

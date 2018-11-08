@@ -178,5 +178,20 @@ public interface CardDao {
      * @param ac01Bean
      * @return
      */
-    int insertUserBatch(@Param("ac01Bean")List<Ac01PO> ac01Bean);
+    int insertUserBatch(@Param("list")List<Ac01PO> ac01Bean);
+
+    /**
+     * 批量插入BUS_APPLY表
+     *
+     * @param busApplyList
+     * @return
+     */
+    int insertBusApplyBatch(@Param("list")List<BusApplyPO> busApplyList);
+
+    /**
+     * 获取指定数据的序列
+     * @param count
+     * @return
+     */
+    List<Long> getAC01SequenceBatch(int count);
 }

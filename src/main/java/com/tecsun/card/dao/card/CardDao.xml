@@ -136,6 +136,11 @@
       SELECT AAC147, AAC003 FROM AC01
     </select>
 
+    <!-- 获取指定长度ac01序列-->
+    <select id="getAC01SequenceBatch" resultType="java.lang.Long">
+      SELECT AC01_SEQ_ID.NEXTVAL FROM DUAL CONNECT BY LEVEL &lt;= #{count}
+    </select>
+
     <!--~ UPDATE ==============================-->
     <update id="updateAC01Status" parameterType="com.tecsun.card.entity.beandao.card.Ac01DAO">
         UPDATE AC01
@@ -235,12 +240,9 @@
         values (sys_log_seq_id.nextval,#{bussinessType},#{userId},#{content},sysdate,sysdate)
     </insert>
 
-    <!-- 批量增加ac01-->
+    <!-- 批量增加ac01 20181025-->
     <insert id="insertUserBatch" parameterType="java.util.List">
-        <selectKey keyProperty="idKey" resultType="long" order="BEFORE">
-            select AC01_SEQ_ID.NEXTVAL from dual
-        </selectKey>
-        insert into AC01
+        INSERT INTO AC01
         (ID,AAB001,Aab004,Aab099,Aac002,
         Aac003,Aac003a,Aac004,Aac005,Aac006,
         Aac009,Aac010,Aac012,Aac042,Aac044,
@@ -248,19 +250,44 @@
         Aac161,Aae005,Aae006,Aae007,Aca111,
         apply_status,apply_type,create_operator_id,email,mark_status,
         photourl,status,validtag,CREATE_TIME,AAC001,
-        AAC301,AAC301A,AAC301B,COLLECT_FLAG
-        )
-        values
-        (#{idKey},#{aab001},#{aab004},#{aab099},#{aac002},
-        #{aac003},#{aac003a},#{aac004},#{aac005},#{aac006},
-        #{aac009},#{aac010},#{aac012},#{aac042},#{aac044},
-        #{aac043},#{aac058},#{aac060},#{aac067},#{aac147},
-        #{aac161},#{aae005},#{aae006},#{aae007},#{aca111},
-        #{applyStatus},#{applyType},#{createOperatorId},#{email},#{markStatus},
-        #{photourl},#{status},#{validtag},sysdate,#{aac001},
-        #{aac301},#{aac301a},#{aac301b},#{collectFlag}
-        )
+        AAC301,AAC301A,AAC301B,COLLECT_FLAG )
+        SELECT A.* FROM (
+        <foreach collection="list" item="user" index="index" separator="union all">
+            SELECT
+            #{user.idKey},#{user.aab001},#{user.aab004},#{user.aab099},#{user.aac002},
+            #{user.aac003},#{user.aac003a},#{user.aac004},#{user.aac005},#{user.aac006},
+            #{user.aac009},#{user.aac010},#{user.aac012},#{user.aac042},#{user.aac044},
+            #{user.aac043},#{user.aac058},#{user.aac060},#{user.aac067},#{user.aac147},
+            #{user.aac161},#{user.aae005},#{user.aae006},#{user.aae007},#{user.aca111},
+            #{user.applyStatus},#{user.applyType},#{user.createOperatorId},#{user.email},#{user.markStatus},
+            #{user.photourl},#{user.status},#{user.validtag},sysdate,#{user.aac001},
+            #{user.aac301},#{user.aac301a},#{user.aac301b},#{user.collectFlag}
+            FROM DUAL
+        </foreach>
+        ) A
+       
     </insert>
+
+    <!-- 批量插入BUS_APPLY表-->
+    <insert id="insertBusApplyBatch" parameterType="java.util.List">
+        INSERT INTO BUS_APPLY
+        (ID, PERSON_ID, BUSINESS_TYPE, STATUS, REGIONAL_ID,
+        APPLY_TIME, APPLY_NAME, APPLY_ID_CARD, APPLY_MOBILE,APPLY_FORM_CODE,
+        SOURCE, FLAG, CHOOSE_CARD_NO, CHANGE_BANK_NO, ISEXPRESS,
+        EXPRESS_NAME, EXPRESS_PHONE, EXPRESS_ADDRESS
+        )
+        SELECT BUS_APPLY_SEQ_ID.nextval, A.* FROM (
+        <foreach collection="list" item="busApply" index="index" separator="union all">
+            SELECT
+            #{busApply.personId}, #{busApply.businessType},#{busApply.status},#{busApply.regionalId},
+            sysdate,#{busApply.applyName},#{busApply.applyIdCard},#{busApply.applyMobile},#{busApply.applyFormCode},
+            #{busApply.source},#{busApply.flag},#{busApply.chooseCardNo},#{busApply.changeBankNo},#{busApply.isexpress},
+            #{busApply.expressName},#{busApply.expressPhone},#{busApply.expressAddress}
+            FROM DUAL
+        </foreach>
+        )A
+    </insert>
+
 
 
 </mapper>

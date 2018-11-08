@@ -14,5 +14,15 @@ public interface SystemService {
 
     Result getDatabaseDetail(String userName);
 
+
+    /**
+     * 判断区域编码是否存在
+     * @param regionalCode
+     * @return
+     */
     boolean judgeReigonalCodeExit(String regionalCode);
+
+
+    void initRedisFromReigonalCode();
+
 }

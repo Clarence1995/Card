@@ -45,4 +45,10 @@ public class RedisServiceImpl implements RedisService {
         jedisPool.returnResource(resource);
         return result;
     }
+
+    @Override
+    public void del(String key) {
+        Jedis resource = jedisPool.getResource();
+        resource.del(key);
+    }
 }

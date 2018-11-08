@@ -50,12 +50,12 @@
          3、expressAddress 修改 70 expressAddress 采集库 express_Address
     -->
     <select id="getSingleBasicPersonByIdcard" resultType="com.tecsun.card.entity.po.BasicPersonInfo">
-        SELECT address,addressCode,
+        SELECT id,address,addressCode,
         birthday,
         certType, cert_num as certNum,cert_validity AS certValidity,
         departmentno, departmentname, education,
         EXPRESS_ADDRESS AS expressAddress, EXPRESS_NAME AS expressName, EXPRESS_PHONE expressPhone,
-        GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,
+        GUARDIANNAME AS guardianName, GUARDIANCONTACT AS guardianContact, GUARDIAN_CERTNO AS guardianCertno,guoji,GONG_AN_STATUS AS gongAnStatus,
         hkbNo,hkType,hkProperty,
         isExpress,isBaby,
         mobile,

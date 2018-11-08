@@ -49,4 +49,11 @@ public interface RedisService {
      *@updateTime
      */
     Long hset (String hkey, String field, String value);
+
+    /**
+     * 删除键
+     * @param key
+     */
+    void del(String key);
+
 }

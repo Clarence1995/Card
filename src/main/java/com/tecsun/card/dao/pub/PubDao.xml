@@ -36,6 +36,18 @@
         SELECT COUNT(DISTINCT_ID) FROM T_DISTINCT WHERE DISTINCT_ID = #{regionalCode}
     </select>
 
+    <!--通过机构ID获取机构详情-->
+    <select id="getTDistinctByRegionCode" resultType="com.tecsun.card.entity.po.TDistinct">
+      SELECT DISTINCT_ID AS distinctId, NAME, CODE, PARENT_ID AS parentId, CREATE_TIME AS createTime
+      FROM T_DISTINCT
+      WHERE DISTINCT_ID = #{regionalCode}
+    </select>
+
+    <select id="listTDistincts" resultType="com.tecsun.card.entity.po.TDistinct">
+        SELECT DISTINCT_ID AS distinctId, NAME, CODE, PARENT_ID AS parentId, CREATE_TIME AS createTime
+        FROM T_DISTINCT
+    </select>
+
     <update id="updateDict" parameterType="com.tecsun.card.entity.vo.RedisDictVO">
         UPDATE T_DICTIONARY
         <set>
@@ -48,6 +60,7 @@
         </set>
         WHERE diction_Id = #{dictionId}
     </update>
+
 
 
     <!--========= SELECT 0214 END 20181024 ==============-->

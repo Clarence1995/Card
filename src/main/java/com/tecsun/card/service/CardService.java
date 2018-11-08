@@ -99,6 +99,12 @@ public interface CardService {
      */
     List<Ac01PO> getAC01DetailByRegeionalCodeAndStatus(String regionalCode, String userStatus);
 
+    /**
+     * 获取指定数据的序列
+     * @param count
+     * @return
+     */
+    List<Long> getAC01SequenceBatch(int count);
 
     // ~ UPDATE ---------------------------------------------
 
@@ -178,5 +184,18 @@ public interface CardService {
 
     Result synchroFromExcel(SynchroExcelVO synchroExcelVO) throws Exception;
 
+    /**
+     * 批量插入AC01表
+     * @param userList
+     * @return
+     */
+    int insertAc01Batch(List<Ac01PO> userList);
+
+    /**
+     * 批量插入申领表
+     * @param busApplyList
+     * @return
+     */
+    int insertBusApplyBatch(List<BusApplyPO> busApplyList);
 
 }

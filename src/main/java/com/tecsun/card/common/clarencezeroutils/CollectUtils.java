@@ -1,8 +1,9 @@
 package com.tecsun.card.common.clarencezeroutils;
 
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
+
+import java.util.*;
 
 /**
  * @author 0214
@@ -10,6 +11,34 @@ import java.util.List;
  * @description
  */
 public class CollectUtils {
+
+
+    /**
+     * 字符串正则过滤
+     * @param srclist
+     * @param regex
+     * @return
+     */
+    public static List<String> strFilter(List<String> srclist, String regex) {
+        if (!ObjectUtils.notEmpty(srclist)) {
+            throw new NullPointerException("[0214] 字符串正则过滤。集合不能为空!");
+        }
+        if (ObjectUtils.isEmpty(regex)) {
+            throw new NullPointerException("[0214] 正则表达式不能为空");
+        }
+        Iterable<String> result     = Iterables.filter(srclist, Predicates.containsPattern(regex));
+        List<String>     resultList = new ArrayList<>();
+        Iterator         iterator   = result.iterator();
+        while (iterator.hasNext()) {
+            resultList.add((String) iterator.next());
+        }
+        return resultList;
+    }
+
+    /**
+     * 集合长度排序
+     * @param list
+     */
     public static void arrayListSortByLength(List list) {
         Collections.sort(list, new Comparator<String>() {
             @Override

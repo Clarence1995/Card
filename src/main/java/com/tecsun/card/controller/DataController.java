@@ -2,7 +2,6 @@ package com.tecsun.card.controller;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.tecsun.card.common.ThreadPoolUtil;
 import com.tecsun.card.common.clarencezeroutils.*;
 import com.tecsun.card.common.txt.TxtUtil;
@@ -10,10 +9,7 @@ import com.tecsun.card.controller.utilcontroller.thread.ImgZipThread;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.vo.GongAnInfoVO;
-import com.tecsun.card.service.CardService;
-import com.tecsun.card.service.CollectService;
-import com.tecsun.card.service.DataHandleService;
-import com.tecsun.card.service.MidService;
+import com.tecsun.card.service.*;
 import com.tecsun.card.service.threadrunnable.DataSynchroRunnable;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -22,7 +18,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
-import springfox.documentation.spring.web.json.Json;
 
 import java.io.File;
 import java.io.IOException;
@@ -56,6 +51,8 @@ public class DataController {
     private CollectService    collectService;
     @Autowired
     private MidService        midService;
+    @Autowired
+    private SystemService systemService;
 
     /**
      * @return
@@ -349,18 +346,19 @@ public class DataController {
      */
     @ApiOperation("采集人员同步到卡管库,使用数据中心处理过的照片来进行同步")
     @RequestMapping(
-            value = "/synchro/{gIdCardFromTxt}/{txtFilePath}/{gIDCardFromImgFile}/{imgFilePath}/{gImgFromDatabase}/{validateUserInfo}/{ignoreFourtyCollectDatabase}/{compareWithGongAnDatabase}/{deleteAC01User}/{copyImgFromHadDeal}/{markPriority}/{logFilePath}/{threadCount}",
+            value = "/synchro/{gIdCardFromTxt}/{txtFilePath}/{gIDCardFromImgFile}/{imgFilePath}/{gImgFromDatabase}/{validateUserInfo}/{ignoreFourtyCollectDatabase}/{compareWithGongAnDatabase}/{deleteAC01User}/{copyImgFromHadDeal}/{copyImgFail}/{markPriority}/{logFilePath}/{threadCount}",
             method = RequestMethod.POST)
     public Result synchro(@ApiParam(name = "gIdCardFromTxt", value = "是否需要从TXT获取身份证", required = true) @PathVariable("gIdCardFromTxt") String gIdCardFromTxt,
-                          @ApiParam(name = "txtFilePath", value = "TXT文本文件", required = false) @PathVariable("txtFilePath") String txtFilePath,
+                          @ApiParam(name = "txtFilePath", value = "TXT文件路径(需要写入文件名)", required = false) @PathVariable("txtFilePath") String txtFilePath,
                           @ApiParam(name = "gIdCardFromImgFile", value = "是否需要从数据中心处理过的照片获取身份证号", required = true) @PathVariable("gIDCardFromImgFile") String gIdCardFromImgFile,
                           @ApiParam(name = "imgFilePath", value = "照片文件夹路径", required = false) @PathVariable("imgFilePath") String imgFilePath,
                           @ApiParam(name = "gImgFromDatabase", value = "是否需要从本地数据库获取照片", required = true) @PathVariable("gImgFromDatabase") String gImgFromDatabase,
                           @ApiParam(name = "validateUserInfo", value = "是否需要基本信息校验", required = true) @PathVariable("validateUserInfo") String validateUserInfo,
                           @ApiParam(name = "ignoreFourtyCollectDatabase", value = "是否需要从40采集库获取人员基本信息", required = true) @PathVariable("ignoreFourtyCollectDatabase") String ignoreFourtyCollectDatabase,
                           @ApiParam(name = "compareWithGongAnDatabase", value = "是否需要和公安库进行比对", required = true) @PathVariable("compareWithGongAnDatabase") String compareWithGongAnDatabase,
-                          @ApiParam(name = "deleteAC01User", value = " 是否需要删除AC01表(用于人员异常信息再同步", required = true) @PathVariable("deleteAC01User") String deleteAC01User,
+                          @ApiParam(name = "deleteAC01User", value = " 是否需要删除AC01表(用于人员异常信息再同步)", required = true) @PathVariable("deleteAC01User") String deleteAC01User,
                           @ApiParam(name = "copyImgFromHadDeal", value = "是否需要复制数据中心处理过的照片到文件夹", required = true) @PathVariable("copyImgFromHadDeal") String copyImgFromHadDeal,
+                          @ApiParam(name = "copyImgFail", value = "是否需要复制失败人员照片到指定文件夹", required = true) @PathVariable("copyImgFail") String copyImgFail,
                           @ApiParam(name = "markPriority", value = "是否需要标记人员为优先", required = true) @PathVariable("markPriority") String markPriority,
                           @ApiParam(name = "logFilePath", value = "日志文件夹路径", required = true) @PathVariable("logFilePath") String logFilePath,
                           @ApiParam(name = "threadCount", value = "线程数量", required = true) @PathVariable("threadCount") Integer threadCount)
@@ -387,6 +385,7 @@ public class DataController {
         }
         // 2、数据定义
         List<String> idCardList            = null;
+        List<String> outerUser             = null;
         String       whereRoald            = "";
         boolean      eGetIdCardFromTxt     = Boolean.parseBoolean(gIdCardFromTxt);
         boolean      eGetIdCardFromImgFile = Boolean.parseBoolean(gIdCardFromImgFile);
@@ -399,6 +398,7 @@ public class DataController {
             txtFilePath = StringUtils.stringFormatPath(txtFilePath, Constants.TXT_SUFFIX);
             // 从TXT文件获取
             try {
+                // 1、获取西藏公民身份证号码
                 idCardList = TxtUtil.readLine(txtFilePath, "UTF-8");
             } catch (Exception e) {
                 logger.error("[0214 采集同步] 读取TXT文件出错,原因: {}", e);
@@ -411,6 +411,14 @@ public class DataController {
             idCardList = MyFileUtils.getAllFileNameNoSuffix(imgFilePath);
             whereRoald = " [数据中心处理照片文件夹] ";
         }
+        // 3-1、对idCardList进行分类(藏区人员/非藏区人员)便于批量调用公安接口
+        List<String> zangUserIds = CollectUtils.strFilter(idCardList, "^(54)");
+        // 非藏区人员
+        List<String> otherUserIds = CollectUtils.strFilter(idCardList, "^(?!54)");
+
+        // 3-2、初始化Redis: 将机构装入Redis
+        systemService.initRedisFromReigonalCode();
+        logger.info("[0214 采集同步] 初始化机构编码Redis成功");
         boolean eGetImgFromDatabase          = Boolean.parseBoolean(gImgFromDatabase);
         boolean eValidateUserInfo            = Boolean.parseBoolean(validateUserInfo);
         boolean eIgnoreFourtyCollectDatabase = Boolean.parseBoolean(ignoreFourtyCollectDatabase);
@@ -418,28 +426,50 @@ public class DataController {
         boolean eDeleteAC01User              = Boolean.parseBoolean(deleteAC01User);
         boolean eCopyImgFromHadDeal          = Boolean.parseBoolean(copyImgFromHadDeal);
         boolean eMarkPriority                = Boolean.parseBoolean(markPriority);
+        boolean eCopyImgFail = Boolean.parseBoolean(copyImgFail);
         // 4、线程分配数据
-        List<List<String>> idCardThreadList = ListThreadUtils.dynamicListThread(idCardList, threadCount);
-
-        // 5、100 => 10 个 10
-        for (List<String> stringList : idCardThreadList) {
-            ThreadPoolUtil.getThreadPool().execute(new DataSynchroRunnable(
-                    dataHandleService,
-                    stringList,
-                    logFilePath,
-                    eGetImgFromDatabase,
-                    eValidateUserInfo,
-                    eIgnoreFourtyCollectDatabase,
-                    eCompareWithGongAnDatabase,
-                    eDeleteAC01User,
-                    eCopyImgFromHadDeal,
-                    eMarkPriority,
-                    imgFilePath
-            ));
+        if (ObjectUtils.notEmpty(zangUserIds)) {
+            // 藏区人员数据
+            List<List<String>> idCardThreadList = ListThreadUtils.dynamicListThread(zangUserIds, threadCount);
+            // 5、100 => 10 个 10
+            for (List<String> stringList : idCardThreadList) {
+                ThreadPoolUtil.getThreadPool().execute(
+                        new DataSynchroRunnable(dataHandleService,
+                                stringList,
+                                logFilePath,
+                                eGetImgFromDatabase,
+                                eValidateUserInfo,
+                                eIgnoreFourtyCollectDatabase,
+                                eCompareWithGongAnDatabase,
+                                eDeleteAC01User,
+                                eCopyImgFromHadDeal,
+                                eMarkPriority,
+                                true,
+                                eCopyImgFail,
+                                imgFilePath
+                        ));
+            }
         }
-        logger.info("[0214 采集同步] 本次同步人员数据从 {} 获取,总人数为: {}。共有{} 个线程。每个线程处理数量为: {}", whereRoald, idCardList.size(), threadCount, idCardThreadList.get(0).size());
+        if (ObjectUtils.notEmpty(otherUserIds)) {
+            ThreadPoolUtil.getThreadPool().execute(
+                    new DataSynchroRunnable(dataHandleService,
+                            otherUserIds,
+                            logFilePath,
+                            eGetImgFromDatabase,
+                            eValidateUserInfo,
+                            eIgnoreFourtyCollectDatabase,
+                            eCompareWithGongAnDatabase,
+                            eDeleteAC01User,
+                            eCopyImgFromHadDeal,
+                            eMarkPriority,
+                            false,
+                            eCopyImgFail,
+                            imgFilePath
+                    ));
+        }
+        logger.info("[0214 采集同步] 本次同步人员数据从 {} 获取,总人数为: {}。属于藏区人数有{} 人。 不属于藏区有 {} 人", whereRoald, idCardList.size(), zangUserIds.size(), otherUserIds.size());
         result.setStateCode(Constants.SUCCESS_RESULT_CODE);
-        result.setMsg("[0214 采集同步] 本次同步人员数据从" + whereRoald + "获取,总人数为: " + idCardList.size() + "。共有" + threadCount + " 个线程。每个线程处理数量为: " + idCardThreadList.get(0).size());
+        result.setMsg("[0214 采集同步] 本次同步人员数据从" + whereRoald + "获取,总人数为: " + idCardList.size() + "。属于藏区人数有 " + zangUserIds.size() + "人。不属于藏区有 " + otherUserIds.size() + "人。");
         return result;
     }
 

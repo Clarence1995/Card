@@ -1,5 +1,7 @@
 package com.tecsun.card.common.clarencezeroutils;
 
+import com.tecsun.card.entity.Constants;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,7 +17,6 @@ import java.util.zip.ZipOutputStream;
  * @author 0214
  */
 public class MyFileUtils {
-    private static final String SEPARATTOR = File.separator;
     private static final int BUFFER_SIZE = 2 * 1024;
     private static final String DOT = ".";
     private static final int WITHOUT_PATTERN = -1;
@@ -26,6 +27,25 @@ public class MyFileUtils {
         System.out.println(s1.lastIndexOf("."));
         // generateFilePath(s1);
     }
+
+    /**
+     * 复制照片到指定文件夹
+     * @param src
+     * @param dist
+     * @param idCard
+     */
+    public static void copyImg(String src, String dist, String idCard) throws Exception {
+        StringBuilder srcBuilder = new StringBuilder(src);
+        srcBuilder.append(Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX);
+        if (new File(srcBuilder.toString()).exists()) {
+            generateFilePath(dist);
+            FileUtils.copyFile(new File(srcBuilder.toString()), new File(dist + Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX));
+            logger.info("[0214] 人员身份证号: {} 复制照片成功", idCard);
+        } else {
+            throw new NullPointerException("[0214 待复制的照片不存在");
+        }
+    }
+
 
     public static void  generateFilePath(String filePath) {
         if (ObjectUtils.isEmpty(filePath)) {

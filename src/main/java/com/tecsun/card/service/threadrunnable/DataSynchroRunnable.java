@@ -1,23 +1,21 @@
 package com.tecsun.card.service.threadrunnable;
 
-import com.tecsun.card.common.clarencezeroutils.DateUtils;
-import com.tecsun.card.common.clarencezeroutils.ObjectUtils;
+import com.tecsun.card.common.clarencezeroutils.*;
 import com.tecsun.card.common.txt.TxtUtil;
 import com.tecsun.card.entity.Constants;
 import com.tecsun.card.entity.Result;
+import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
 import com.tecsun.card.entity.po.Ac01PO;
 import com.tecsun.card.entity.po.BasicPersonInfo;
 import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.service.*;
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 
 /**
  * @author 0214
@@ -81,6 +79,14 @@ public class DataSynchroRunnable implements Runnable {
      * 是否需要标记人员为优先
      */
     private boolean eMarkPriority;
+    /**
+     * 是否为藏区人员
+     */
+    private boolean eZang;
+    /**
+     * 是否需要复制失败人员照片到指定文件夹
+     */
+    private boolean copyImgFail;
     private boolean getImgFromFile;
 
     private final String LOG_NAME         = "人员同步日志记录";
@@ -145,6 +151,8 @@ public class DataSynchroRunnable implements Runnable {
      * @param eDeleteAC01User              是否需要删除AC01人员表(这个是处理异常人员数据的。先把AC01人员删除掉,再从采集库里面同步到卡管库)
      * @param eCopyImgFromHadDeal          是否需要复制数据中心处理过的照片(因为做同步的时候,可能只需要把采集库的人员信息导入到卡管库,但是人员图片可能已经存在了)
      * @param eMarkPriority                是否需要标记人员为优先
+     * @param eZang                        是否为藏区人员
+     * @param eCopyImgFail                 是否需要复制同步失败人员照片
      * @param imgFilePath                  如果需要复制照片,则需要传递照片根路径
      */
     public DataSynchroRunnable(DataHandleService dataHandleService,
@@ -157,6 +165,8 @@ public class DataSynchroRunnable implements Runnable {
                                Boolean eDeleteAC01User,
                                Boolean eCopyImgFromHadDeal,
                                Boolean eMarkPriority,
+                               Boolean eZang,
+                               Boolean eCopyImgFail,
                                String imgFilePath) {
         this.dataHandleService = dataHandleService;
         this.idCardList = idCardList;
@@ -168,6 +178,8 @@ public class DataSynchroRunnable implements Runnable {
         this.eDeleteAC01User = eDeleteAC01User;
         this.eCopyImgFromHadDeal = eCopyImgFromHadDeal;
         this.eMarkPriority = eMarkPriority;
+        this.eZang = eZang;
+        this.copyImgFail = eCopyImgFail;
         this.imgFilePath = imgFilePath;
     }
 
@@ -187,7 +199,7 @@ public class DataSynchroRunnable implements Runnable {
             throw new NullPointerException("imgFilePath 不能为空");
         }
         if (!ObjectUtils.notEmpty(idCardList)) {
-            throw new NullPointerException("idCardList 不能为空");
+            throw new NullPointerException("idCardList 不能为空。此线程不参与同步");
         }
 
         // 2、数据准备
@@ -199,12 +211,18 @@ public class DataSynchroRunnable implements Runnable {
         ArrayList<String> errorLogList = new ArrayList<>();
         // 异常日志信息
         ArrayList<String> exceptionLogList = new ArrayList<>();
-        List<Ac01PO> userList = new ArrayList<>(10);
-        List<BusApplyPO> busApplyList = new ArrayList<>(10);
-        List<BasicPersonInfo> basicPersonInfoList = new ArrayList<>(10);
-        // 遍历集合
-        for (String idCard : idCardList) {
+        // 照片复制出错
+        ArrayList<String>       copyImgFailList     = new ArrayList<>();
+        List<Ac01PO>            userList            = new ArrayList<>(10);
+        Map<String, BusApplyPO> busApplyList        = new HashMap<>(10);
+        List<BasicPersonInfo>   basicPersonInfoList = new ArrayList<>(10);
+
+        // 遍历集合(重新开线程处理)
+
+        for (int i = 0; i < idCardList.size(); i++) {
+            String idCard = idCardList.get(i);
             try {
+                boolean commit = false;
                 Result result = dataHandleService
                         .handleCollectSynchro(idCard,
                                 eGetImgFromDatabase,
@@ -214,29 +232,54 @@ public class DataSynchroRunnable implements Runnable {
                                 eDeleteAC01User,
                                 eCopyImgFromHadDeal,
                                 eMarkPriority,
+                                eZang,
                                 imgFilePath);
                 if (Constants.FAIL_RESULT_CODE == result.getStateCode()) {
+                    // 失败人员信息
                     errorLogList.add(result.getMsg());
                     bad++;
                 } else if (Constants.SUCCESS_RESULT_CODE == result.getStateCode()) {
-                    // 人员成功
-                    if (userList.size() == 10) {
-                        // 插入操作
-
-                    } else{
-                        Map<String, Object> resultMap = (Map<String, Object>) result.getData();
-                        Ac01PO ac01Bean = (Ac01PO) resultMap.get("AC01");
-                        BusApplyPO busApplyBean = (BusApplyPO)resultMap.get("BUS_APPLY");
-                        BasicPersonInfo basicPersonInfoBean = (BasicPersonInfo) resultMap.get("BASIC_PERSON_INFO");
-                        userList.add(ac01Bean);
-                        busApplyList.add(busApplyBean);
-                        basicPersonInfoList.add(basicPersonInfoBean);
-                    }
-
-                    good++;
+                    // 成功人员信息
+                    Map<String, Object> resultMap           = (Map<String, Object>) result.getData();
+                    Ac01PO              ac01Bean            = (Ac01PO) resultMap.get("AC01");
+                    BusApplyPO          busApplyBean        = (BusApplyPO) resultMap.get("BUS_APPLY");
+                    BasicPersonInfo     basicPersonInfoBean = (BasicPersonInfo) resultMap.get("BASIC_PERSON_INFO");
+                    userList.add(ac01Bean);
+                    busApplyList.put(busApplyBean.getApplyIdCard(), busApplyBean);
+                    basicPersonInfoList.add(basicPersonInfoBean);
                 } else {
+                    // 异常人员信息
                     bad++;
                     exceptionLogList.add(result.getMsg());
+                }
+                if (userList.size() == 10) {
+                    commit = true;
+                } else if (i == idCardList.size() - 1) {
+                    commit = true;
+                }
+                if (commit && userList.size() > 0) {
+                    BasicPersonInfoDAO idList = new BasicPersonInfoDAO();
+                    idList.setDealStatus(Constants.COLLECT_QUALIFIED);
+                    idList.setDealMsg("合格");
+                    idList.setSynchroStatus(Constants.COLLECT_HAD_SYNCHRO);
+                    List<Long> idList2 = new ArrayList<>();
+                    for (BasicPersonInfo basicPersonInfo : basicPersonInfoList) {
+                        idList2.add(basicPersonInfo.getId());
+                    }
+                    idList.setIdList(idList2);
+                    // 插入操作
+                    Result result1 = dataHandleService.handleSynchroByUserListBusList(userList, busApplyList, idList);
+                    if (Constants.EXCEPTION_RESULT_CODE == result1.getStateCode()) {
+                        List<Ac01PO> userErrorList = (List<Ac01PO>) result1.getData();
+                        for (Ac01PO ac01PO : userErrorList) {
+                            errorLogList.add(ac01PO.getAac147() + "_批量同步出现异常");
+                            bad++;
+                        }
+                        continue;
+                    } else {
+                        good += userList.size();
+                    }
+                    userList = new ArrayList<>(10);
                 }
             } catch (Exception e) {
                 logger.error("[0214 采集同步] 人员ID:{} 同步出现异常。原因: {}", idCard, e);
@@ -248,20 +291,47 @@ public class DataSynchroRunnable implements Runnable {
                 }
             }
         }
-
         try {
+            if (copyImgFail) {
+                try {
+                    // 失败照片复制
+                    String str = PropertyUtils.get("CARD_FAIL_IMG_PATH");
+                    if (ObjectUtils.notEmpty(errorLogList)) {
+                        for (String s : errorLogList) {
+                            String id = s.split("_")[0];
+                            MyFileUtils.copyImg(imgFilePath, str, id);
+                        }
+                    } else if (ObjectUtils.notEmpty(exceptionLogList)) {
+                        for (String s : exceptionLogList) {
+                            String id = s.split("_")[0];
+                            MyFileUtils.copyImg(imgFilePath, str, id);
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.error("[0214 复制失败照片出错。原因: {}", e);
+                    // exceptionLogList.add()
+                }
+            }
             // 日志文件路径
             synchronized (object) {
-                successList.add("线程:" + Thread.currentThread().getName() + "。 处理总人数:" + totalNum + "。成功人数:" + good + ";失败人数:" + bad);
+                successList.add("线程:" + Thread.currentThread().getName() + ": 处理总人数:" + totalNum + "。成功人数:" + good + ";失败人数:" + bad);
                 if (ObjectUtils.notEmpty(errorLogList)) {
                     StringBuilder logFilePath = new StringBuilder(logPath);
-                    logFilePath.append(Constants.SEPARATOR + LOG_NAME + DateUtils.getNowYMDHM() + (new Random().nextInt(90) + 10) + "_ERROR" + Constants.TXT_SUFFIX);
-                    TxtUtil.writeTxt(new File(logFilePath.toString()), "UTF-8", errorLogList);
+                    logFilePath.append(Constants.SEPARATOR + LOG_NAME + PropertyUtils.get("CARD_LOG_FAIL") + Constants.TXT_SUFFIX);
+                    TxtUtil.appendTxt(new File(logFilePath.toString()), errorLogList);
+                    TxtUtil.textFormat(logFilePath.toString());
                 }
                 if (ObjectUtils.notEmpty(exceptionLogList)) {
                     StringBuilder exceptionLogFilePath = new StringBuilder(logPath);
-                    exceptionLogFilePath.append(Constants.SEPARATOR + LOG_NAME + DateUtils.getNowYMDHM() + (new Random().nextInt(90) + 10) +  "_EXCEPTION" + Constants.TXT_SUFFIX);
+                    exceptionLogFilePath.append(Constants.SEPARATOR + LOG_NAME + PropertyUtils.get("CARD_LOG_EXCEPTION") + Constants.TXT_SUFFIX);
+                    TxtUtil.appendTxt(new File(exceptionLogFilePath.toString()), exceptionLogList);
+                    TxtUtil.textFormat(exceptionLogFilePath.toString());
+                }
+                if (ObjectUtils.notEmpty(copyImgFailList)) {
+                    StringBuilder exceptionLogFilePath = new StringBuilder(logPath);
+                    exceptionLogFilePath.append(Constants.SEPARATOR + LOG_NAME + "_COPYIMGERROR" + Constants.TXT_SUFFIX);
                     TxtUtil.writeTxt(new File(exceptionLogFilePath.toString()), "UTF-8", exceptionLogList);
+                    TxtUtil.textFormat(exceptionLogFilePath.toString());
                 }
                 logger.info("[0214 采集同步 完成] ~----------当前线程: {}, 处理总人数: {}, 成功人数: {}, 失败人数: {}-----------------------",
                         Thread.currentThread().getName(), totalNum, good, bad);

@@ -60,6 +60,13 @@ public class Constants {
     // 没有藏文名字,默认为 00
     public static final String ZANG_NAME_NOT_EXIST = "00";
 
+    // ----------- 公安比对情况 START---------------
+    public static final String COLLECT_GONGAN_COMPARE_NO        = "00";
+    public static final String COLLECT_GONGAN_COMPARE_UPDATE    = "01";
+    public static final String COLLECT_GONGAN_COMPARE_YES       = "02";
+    public static final String COLLECT_GONGAN_COMPARE_EXCEPTION = "03";
+    public static final String COLLECT_GONGAN_COMPARE_NO_DATA   = "04";
+    // ----------- 公安比对情况 END---------------
 
     // 区外异地编码 AAC301
     public static final String OUTER_CODE_REGIONAL = "549900";
@@ -72,21 +79,21 @@ public class Constants {
 
     //  ----------证件类型 START------------
     // 居民身份证(户口簿)
-    public static final String IDCARD_TYPE_JUMING    = "01";
+    public static final String IDCARD_TYPE_JUMING          = "01";
     // 中国人民解放军军官证
-    public static final String IDCARD_TYPE_JUNGUAN   = "02";
+    public static final String IDCARD_TYPE_JUNGUAN         = "02";
     // 中国人民武装警察警官证
-    public static final String IDCARD_TYPE_WUJING    = "03";
+    public static final String IDCARD_TYPE_WUJING          = "03";
     // 香港特区护照/港澳居民来往内地通行证
-    public static final String IDCARD_TYPE_XIANGGANG = "04";
+    public static final String IDCARD_TYPE_XIANGGANG       = "04";
     // 澳门区护照/港澳居民来往内地通行证
-    public static final String IDCARD_TYPE_AOMEN     = "05";
+    public static final String IDCARD_TYPE_AOMEN           = "05";
     // 台湾居民来往大陆通行证
-    public static final String IDCARD_TYPE_TAIWAN    = "06";
+    public static final String IDCARD_TYPE_TAIWAN          = "06";
     // 外国人永久居留证
-    public static final String IDCARD_TYPE_GUOWAI    = "07";
+    public static final String IDCARD_TYPE_GUOWAI_YONGJIU  = "07";
     // 外国人护照
-    public static final String IDCARD_TYPE_PASSPORT  = "08";
+    public static final String IDCARD_TYPE_GUOWAI_PASSPORT = "08";
     //  ----------证件类型 END------------
 
 

@@ -3,12 +3,15 @@ package com.tecsun.card.service;
 import com.tecsun.card.entity.Result;
 import com.tecsun.card.entity.beandao.card.Ac01DAO;
 import com.tecsun.card.entity.beandao.collect.BasicPersonInfoDAO;
+import com.tecsun.card.entity.po.Ac01PO;
 import com.tecsun.card.entity.po.BasicPersonInfo;
+import com.tecsun.card.entity.po.BusApplyPO;
 import com.tecsun.card.entity.vo.GongAnInfoVO;
 import com.tecsun.card.exception.HttpNetWorkException;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author 0214
@@ -50,6 +53,7 @@ public interface DataHandleService {
                                        Boolean eDeleteAC01User,
                                        Boolean eCopyImgFromHadDeal,
                                        Boolean eMarkPriority,
+                                       Boolean eZang,
                                        String imgFilePath
     );
 
@@ -126,6 +130,20 @@ public interface DataHandleService {
      */
     Result compareWithGongAnUserInfo(BasicPersonInfo userInfo) throws Exception;
 
+    /**
+     * 公安批量接口
+     * @param userInfoList
+     * @return
+     * @throws Exception
+     */
     List<GongAnInfoVO> getUserInfoFromGongAnByIdCardList(List<GongAnInfoVO> userInfoList) throws Exception;
 
+    /**
+     * 处理人员批量同步
+     * @param userList
+     * @param busApplyMap
+     * @param basicInfo
+     * @return
+     */
+    Result handleSynchroByUserListBusList(List<Ac01PO> userList, Map<String, BusApplyPO> busApplyMap, BasicPersonInfoDAO basicInfo) throws Exception;
 }

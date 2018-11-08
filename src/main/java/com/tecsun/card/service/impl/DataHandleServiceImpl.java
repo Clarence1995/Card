@@ -2,7 +2,6 @@ package com.tecsun.card.service.impl;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.sun.org.apache.xpath.internal.operations.Bool;
 import com.tecsun.card.common.ThreadPoolUtil;
 import com.tecsun.card.common.clarencezeroutils.*;
 import com.tecsun.card.common.excel.ExcelDataFormatter;
@@ -66,15 +65,17 @@ public class DataHandleServiceImpl implements DataHandleService {
     private final        int    NULL_NUM                       = 0;
 
     @Autowired
-    private CardService     cardService;
+    private CardService                cardService;
     @Autowired
-    private MidService      midService;
+    private MidService                 midService;
     @Autowired
-    private CollectService  collectService;
+    private CollectService             collectService;
     @Autowired
-    private DongRuanService dongRuanService;
+    private DongRuanService            dongRuanService;
     @Autowired
-    private SystemService systemService;
+    private SystemService              systemService;
+    @Autowired
+    private CollectValidateServiceImpl collectValidateService;
 
     /**
      * @return com.tecsun.card.entity.Result
@@ -402,6 +403,19 @@ public class DataHandleServiceImpl implements DataHandleService {
      * @param eDeleteAC01User            是否需要删除113AC01人员数据
      * @return
      */
+    /**
+     * @param idCard                     身份证号码
+     * @param egetImgFromDatabase        是否需要从本地数据库获取公安照片
+     * @param eValidateUserInfo          是否需要校验人员基本信息
+     * @param eGetCollectDataFromFourty  是否需要从40采集库获取数据
+     * @param eCompareWithGongAnDatabase 是否需要和公安库进行人员信息比对
+     * @param eDeleteAC01User            是否需要删除卡管AC01人员表
+     * @param eCopyImgFromHadDeal        是否需要复制数据中心处理过的照片到113指定文件夹内
+     * @param eMarkPriority              是否需要标记人员状态为优先
+     * @param eZang                      是否为藏区人员数据
+     * @param imgFilePath                照片路径文件夹
+     * @return
+     */
     @Override
     public Result handleCollectSynchro(String idCard,
                                        Boolean egetImgFromDatabase,
@@ -411,6 +425,7 @@ public class DataHandleServiceImpl implements DataHandleService {
                                        Boolean eDeleteAC01User,
                                        Boolean eCopyImgFromHadDeal,
                                        Boolean eMarkPriority,
+                                       Boolean eZang,
                                        String imgFilePath
     ) {
         // 1、不为空判断
@@ -486,36 +501,46 @@ public class DataHandleServiceImpl implements DataHandleService {
         BasicPersonInfo basicPersonInfo = null;
         // 4-1、判断采集源数据获取: 如果从70(也指中间库20,因为113数据库连接不了70的采集库,所以我把70的数据复制到中间库20里面)获取
         try {
-            if (!eGetCollectDataFromFourty) {
-                basicPersonInfo = collectService.getSingleBasicPersonByIdcardFromMidTwenty(idCard, null);
-                if (null == basicPersonInfo) {
-                    // 4-2、中间库20不存在,尝试访问40采集库查看是否有这个人
-                    basicPersonInfo = collectService.getBasicInfoByIDCard(idCard, null);
-                    if (null == basicPersonInfo) {
-                        // 4-3、如果还没有这个人存在,则标记为异常数据
-                        logger.error("[0214 采集同步] 人员身份证号: {} 在卡管库存在,回写采集库出现错误,错误原因:{}", idCard, "该人员在40/70采集库不存在有效信息");
-                        errorLogBuilder.append("_人员在40/70采集库不存在有效信息");
-                        myResult.setStateCode(Constants.FAIL_RESULT_CODE);
-                        myResult.setData(errorLogBuilder);
-                        return myResult;
-                    }
-                }
-            } else {
-                // 4-4、从40采集库获取数据
-                basicPersonInfo = collectService.getBasicInfoByIDCard(idCard, null);
-                if (null == basicPersonInfo) {
-                    // 4-5、如果采集库40没有此人存在,则尝试访问20中间库
-                    basicPersonInfo = collectService.getSingleBasicPersonByIdcardFromMidTwenty(idCard, null);
-                    if (null == basicPersonInfo) {
-                        // 4-6、如果20中间库还没有的话,则标记为异常数据
-                        logger.error("[0214 采集同步] 人员身份证号: {} 在卡管库存在,回写采集库出现错误,错误原因:{}", idCard, "该人员在40/70采集库不存在有效信息");
-                        errorLogBuilder.append("_人员在40/70采集库不存在有效信息");
-                        myResult.setStateCode(Constants.FAIL_RESULT_CODE);
-                        myResult.setData(errorLogBuilder);
-                        return myResult;
-                    }
-                }
+            basicPersonInfo = collectService.getBasicInfoByIDCard(idCard, null);
+            if (null == basicPersonInfo) {
+                // 4-6、如果20中间库还没有的话,则标记为异常数据
+                logger.error("[0214 采集同步] 人员身份证号: {} 在卡管库存在,回写采集库出现错误,错误原因:{}", idCard, "该人员在40采集库不存在有效信息");
+                errorLogBuilder.append("_人员在40采集库不存在有效信息");
+                myResult.setStateCode(Constants.FAIL_RESULT_CODE);
+                myResult.setData(errorLogBuilder);
+                return myResult;
             }
+
+            // if (!eGetCollectDataFromFourty) {
+            //     basicPersonInfo = collectService.getSingleBasicPersonByIdcardFromMidTwenty(idCard, null);
+            //     if (null == basicPersonInfo) {
+            //         // 4-2、中间库20不存在,尝试访问40采集库查看是否有这个人
+            //         basicPersonInfo = collectService.getBasicInfoByIDCard(idCard, null);
+            //         if (null == basicPersonInfo) {
+            //             // 4-3、如果还没有这个人存在,则标记为异常数据
+            //             logger.error("[0214 采集同步] 人员身份证号: {} 在卡管库存在,回写采集库出现错误,错误原因:{}", idCard, "该人员在40/70采集库不存在有效信息");
+            //             errorLogBuilder.append("_人员在40/70采集库不存在有效信息");
+            //             myResult.setStateCode(Constants.FAIL_RESULT_CODE);
+            //             myResult.setData(errorLogBuilder);
+            //             return myResult;
+            //         }
+            //     }
+            // } else {
+            //     // 4-4、从40采集库获取数据
+            //     basicPersonInfo = collectService.getBasicInfoByIDCard(idCard, null);
+            //     if (null == basicPersonInfo) {
+            //         // 4-5、如果采集库40没有此人存在,则尝试访问20中间库
+            //         basicPersonInfo = collectService.getSingleBasicPersonByIdcardFromMidTwenty(idCard, null);
+            //         if (null == basicPersonInfo) {
+            //             // 4-6、如果20中间库还没有的话,则标记为异常数据
+            //             logger.error("[0214 采集同步] 人员身份证号: {} 在卡管库存在,回写采集库出现错误,错误原因:{}", idCard, "该人员在40/70采集库不存在有效信息");
+            //             errorLogBuilder.append("_人员在40/70采集库不存在有效信息");
+            //             myResult.setStateCode(Constants.FAIL_RESULT_CODE);
+            //             myResult.setData(errorLogBuilder);
+            //             return myResult;
+            //         }
+            //     }
+            // }
         } catch (Exception e) {
             logger.error("[0214 采集同步] 人员身份证号: {} 获取采集库人员数据异常,异常原因:{}", idCard, e);
             exceptionBuilder.append("_获取采集库人员数据异常," + e.getMessage());
@@ -530,10 +555,10 @@ public class DataHandleServiceImpl implements DataHandleService {
         ac01PO.setAac147(idCard);
         if (eValidateUserInfo) {
             // 基础信息校验
-            boolean checkUserInfo = CollectDatabaseUtils.checkCollectUserInfo(basicPersonInfo);
+            boolean checkUserInfo = collectValidateService.checkCollectUserInfo(basicPersonInfo);
             // 区划校验
             ac01PO.setAac301b(basicPersonInfo.getRegionalCode());
-            boolean checkRegionalCode = CollectDatabaseUtils.checkRegionalcode(ac01PO);
+            boolean checkRegionalCode = collectValidateService.checkRegionalcode(ac01PO);
             if (!(checkUserInfo && checkRegionalCode)) {
                 // 如果校验不成功,则跳出FOR循环,并更新用户信息 同步状态为:0 数据处理状态为 04
                 updateCollectStatusBean.setSynchroStatus(Constants.COLLECT_NO_SYNCHRO);
@@ -579,18 +604,35 @@ public class DataHandleServiceImpl implements DataHandleService {
             }
 
         } else {
-            boolean checkRegionalCode = CollectDatabaseUtils.checkRegionalcode(ac01PO);
+            boolean checkRegionalCode = collectValidateService.checkRegionalcode(ac01PO);
         }
         // 5、---------------------------------- ~ 基本信息校验 END ----------------------------------
 
-        // 6、公安信息比对
-        if (eCompareWithGongAnDatabase) {
+        // 6、---------------------------------- ~ 公安信息校验 START ----------------------------------
+        String gongAnStatus = basicPersonInfo.getGongAnStatus();
+        if (null == gongAnStatus) {
+            gongAnStatus = Constants.COLLECT_GONGAN_COMPARE_NO;
+        }
+        if (gongAnStatus.equals(Constants.COLLECT_GONGAN_COMPARE_YES) || gongAnStatus.equals(Constants.COLLECT_GONGAN_COMPARE_UPDATE)) {
+
+        } else if (gongAnStatus.equals(Constants.COLLECT_GONGAN_COMPARE_EXCEPTION) || gongAnStatus.equals(Constants.COLLECT_GONGAN_COMPARE_NO_DATA)) {
+            // 如果为03:失败/04:公安库查无记录
+            logger.info("[0214 采集同步] 人员身份证号: {} 公安信息校验失败或公安库查无此人");
+            errorLogBuilder.append("_公安信息校验失败或公安库查无此人");
+            myResult.setStateCode(Constants.EXCEPTION_RESULT_CODE);
+            myResult.setData(errorLogBuilder);
+            return myResult;
+        }
+        // 如果需要和公安库进行比对,则需要判断是否为00:未校验,才能比对
+            if (eCompareWithGongAnDatabase) {
             try {
-                Result compareWithGongAnResult = compareWithGongAnUserInfo(basicPersonInfo);
-                if (Constants.FAIL_RESULT_CODE == compareWithGongAnResult.getStateCode()) {
-                    myResult.setStateCode(Constants.FAIL_RESULT_CODE);
-                    myResult.setMsg(idCard + "_公安信息比对不过:" + compareWithGongAnResult.getMsg());
-                    return myResult;
+                if (gongAnStatus.equals(Constants.COLLECT_GONGAN_COMPARE_NO)) {
+                    Result compareWithGongAnResult = compareWithGongAnUserInfo(basicPersonInfo);
+                    if (Constants.FAIL_RESULT_CODE == compareWithGongAnResult.getStateCode()) {
+                        myResult.setStateCode(Constants.FAIL_RESULT_CODE);
+                        myResult.setMsg(idCard + "_公安信息比对不过:" + compareWithGongAnResult.getMsg());
+                        return myResult;
+                    }
                 }
             } catch (Exception e) {
                 logger.error("[0214 采集同步] 与公安信息对比发生异常。原因: {}", e);
@@ -603,6 +645,7 @@ public class DataHandleServiceImpl implements DataHandleService {
                 return myResult;
             }
         }
+        // 6、---------------------------------- ~ 公安信息校验 END ----------------------------------
 
         // 7、照片处理。源照片文件夹路径/目标路径/数据库路径
         // 7-1、数据库路径
@@ -614,19 +657,14 @@ public class DataHandleServiceImpl implements DataHandleService {
         StringBuilder imgDisPath = new StringBuilder(Constants.IMG_113_FILE_ROOT_PATH);
         imgDisPath.append(Constants.SEPARATOR + ac01PO.getAac301() + Constants.SEPARATOR + idCard + Constants.IMG_SUFFIX);
         if (eCopyImgFromHadDeal) {
+            boolean eBabyCard = true;
             // 7-3-1、判断是否为婴儿照片
-            boolean eBabyCard = false;
-            if (null != basicPersonInfo.getIsBaby()) {
-                String eBaby = basicPersonInfo.getIsBaby();
-                if (Constants.COLLECT_IS_BABY.equals(eBaby)) {
-                    eBabyCard = true;
-                } else {
-                    eBabyCard = false;
-                }
+            if (Constants.COLLECT_IS_BABY.equals(basicPersonInfo.getIsBaby())) {
+                // 如果为婴儿卡
+                eBabyCard = true;
             } else {
-                eBabyCard = HandleCollectDateUtils.eBabyCard(basicPersonInfo.getBirthday());
+                eBabyCard = false;
             }
-
             if (eBabyCard) {
                 // 就把照片复制到默认文件夹
                 imgSrcPath = new StringBuilder(PropertyUtils.get("BABAY_IMG_PATH"));
@@ -698,7 +736,6 @@ public class DataHandleServiceImpl implements DataHandleService {
         }
 
 
-
         // 9、同步
         try {
             // 9-1、人员信息组装
@@ -745,7 +782,7 @@ public class DataHandleServiceImpl implements DataHandleService {
             // 00 不邮寄
             busApplyPO.setIsexpress(Constants.BUS_APPLY_EXPRESS_NO);
         }
-        
+
         Map<String, Object> resultMap = new HashMap<>(3);
         resultMap.put("BASIC_PERSON_INFO", basicPersonInfo);
         resultMap.put("AC01", ac01PO);
@@ -755,6 +792,7 @@ public class DataHandleServiceImpl implements DataHandleService {
         myResult.setMsg("该人员可以进行同步");
         myResult.setData(resultMap);
         return myResult;
+
         // 20181024 修改 START ------
         // try {
         //     boolean synchroBean = cardService.insertCardAC01AndBusApplyFromCollect(ac01PO, basicPersonInfo);
@@ -1217,7 +1255,6 @@ public class DataHandleServiceImpl implements DataHandleService {
                     resultBean.setXB(Integer.valueOf(user.getString("XB")));
                     resultBean.setHKSZD(user.getString("HKSZD"));
                     resultBean.setSFZH(user.getString("SFZH"));
-
                     logger.info("[0214 从公安库获取用户信息] 用户信息解析成功。用户详情{}", JSONObject.toJSONString(resultBean));
                     return resultBean;
                 }
@@ -1251,19 +1288,19 @@ public class DataHandleServiceImpl implements DataHandleService {
         }
 
         if (!gongAnInfo.getXM().equals(userInfo.getName())) {
-            resultSb.append(" 姓名对比不过");
+            resultSb.append("_姓名对比不过");
             compareResult = false;
         }
         if (!gongAnInfo.getMZ().equals(userInfo.getNation())) {
-            resultSb.append(" 民族比对不过");
+            resultSb.append("_民族比对不过");
             compareResult = false;
         }
         if (!gongAnInfo.getXB().equals(userInfo.getSex())) {
-            resultSb.append("性别比对不过");
+            resultSb.append("_性别比对不过");
             compareResult = false;
         }
         if (!gongAnInfo.getCSRQ().equals(userInfo.getBirthday())) {
-            resultSb.append("出生日期比对不过");
+            resultSb.append("_出生日期比对不过");
             compareResult = false;
         }
         if (compareResult) {
@@ -1360,6 +1397,64 @@ public class DataHandleServiceImpl implements DataHandleService {
             }
         }
         return resultBeanList;
+    }
+
+    /**
+     * 处理人员批量同步
+     *
+     * @param userList
+     * @param busApplyList
+     * @param basicPersonInfoList
+     * @return
+     */
+    @Override
+    @Transactional(value = "springJTATransactionManager", rollbackFor = {Exception.class})
+    public Result handleSynchroByUserListBusList(List<Ac01PO> userList, Map<String, BusApplyPO> busApplyMap, BasicPersonInfoDAO basicInfo) throws Exception {
+        Result result = new Result();
+        if (!ObjectUtils.notEmpty(userList)) {
+            throw new NullPointerException("[0214] userList不能为空");
+        }
+        try {
+            if (userList.size() != busApplyMap.size()) {
+                result.setStateCode(Constants.FAIL_RESULT_CODE);
+                result.setMsg("AC01和BUS_APPLY集合数量对应不上");
+                result.setData(userList);
+                return result;
+            }
+            // 1、根据数组大小获取相对应的 AC01id
+            int        userCount  = userList.size();
+            List<Long> ac01IdList = cardService.getAC01SequenceBatch(userCount);
+            // 2、装配
+            for (int i = 0; i < userCount; i++) {
+                userList.get(i).setIdKey(ac01IdList.get(i));
+                busApplyMap.get(userList.get(i).getAac147()).setPersonId(ac01IdList.get(i));
+            }
+            int a = cardService.insertAc01Batch(userList);
+
+            // 3、遍历,获取BUS
+            List<BusApplyPO>       busApplyPOList = new ArrayList<>(busApplyMap.size());
+            Collection<BusApplyPO> values         = busApplyMap.values();
+            Iterator<BusApplyPO>   iterator       = values.iterator();
+            while (iterator.hasNext()) {
+                busApplyPOList.add(iterator.next());
+            }
+
+            int b = cardService.insertBusApplyBatch(busApplyPOList);
+            int c = collectService.updateUserInfoStatusByIdList(basicInfo.getIdList(), basicInfo.getSynchroStatus(), basicInfo.getDealStatus(), basicInfo.getDealMsg());
+
+            result.setStateCode(Constants.SUCCESS_RESULT_CODE);
+            result.setMsg("批量插入成功");
+            result.setData(a);
+
+            return result;
+        } catch (Exception e) {
+            logger.error("[0214 AC01表、BUS_APPLY表、BASIC_PERSON_INFO表 批量插入异常。异常原因: {}", e);
+            TransactionAspectSupport.currentTransactionStatus().setRollbackOnly();
+            result.setStateCode(Constants.EXCEPTION_RESULT_CODE);
+            result.setMsg("批量插入异常" + e.getMessage());
+            result.setData(userList);
+            return result;
+        }
     }
 
 

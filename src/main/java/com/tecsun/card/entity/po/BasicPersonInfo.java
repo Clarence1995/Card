@@ -115,4 +115,5 @@ public class BasicPersonInfo {
     private String declareNo;
     private String bankDeclareStatus;
     private String signphotoUrl;
+
 }

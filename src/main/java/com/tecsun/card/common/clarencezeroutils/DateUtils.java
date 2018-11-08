@@ -41,7 +41,9 @@ public class DateUtils {
     public static final String ymd_H_M_S   = "yyyy/MM/dd HH:mm:ss";
 
     public static void main(String[] args) {
-        System.out.println(getYYYYMMDDFormatDateStr());
+        String s = "2018";
+        System.out.println(isValidateyyyymmdd(s));
+        // System.out.println(getYYYYMMDDFormatDateStr());
         // System.out.println(getNowYMDHMS());
         // String s1   = "20180917";
         // Date   date = DateUtils.getDateByString(s1, YMD);
@@ -197,6 +199,17 @@ public class DateUtils {
     public static boolean isValidDate(String selectDate) {
         try {
             Date date = dateFormat.parse(selectDate);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static boolean isValidateyyyymmdd(String selectDate) {
+        try {
+            YYYYMMDD.setLenient(false);
+            Date date = YYYYMMDD.parse(selectDate);
+            System.out.println(date);
             return true;
         } catch (Exception e) {
             return false;
